@@ -16,12 +16,14 @@ import FindingDetailDrawer from "./FindingDetailDrawer";
 export default function FindingsView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const scanIdParam = searchParams.get("scanId");
   const targetIdParam = searchParams.get("targetId");
   const findingIdParam = searchParams.get("findingId");
   const severityParam = searchParams.get("severity");
   const statusParam = searchParams.get("status");
 
   const findings = useEnrichedFindings();
+  const scans = useAppStore((state) => state.scans);
   const targets = useAppStore((state) => state.targets);
   const updateFindingStatus = useAppStore((state) => state.updateFindingStatus);
 
@@ -58,6 +60,9 @@ export default function FindingsView() {
 
   // Local Filter & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
+  const [scanFilters, setScanFilters] = useState<string[]>(
+    scanIdParam ? [scanIdParam] : ["all"],
+  );
   const [targetFilters, setTargetFilters] = useState<string[]>(
     targetIdParam ? [targetIdParam] : ["all"],
   );
@@ -67,6 +72,24 @@ export default function FindingsView() {
   const [statusFilters, setStatusFilters] = useState<string[]>(
     statusParam ? [statusParam] : ["all"],
   );
+
+  const targetMap = useMemo(
+    () => new Map(targets.map((t) => [t.id, t])),
+    [targets],
+  );
+
+  const scanFilterOptions = useMemo(() => {
+    return [
+      { label: "All Scans", value: "all", count: findings.length },
+      ...scans
+        .map((s) => ({
+          label: `#${s.id} - ${targetMap.get(s.targetId)?.name || s.targetId}`,
+          value: s.id,
+          count: findings.filter((f) => f.scanId === s.id).length,
+        }))
+        .filter((opt) => opt.count > 0 || (scanFilters.includes(opt.value) && opt.value !== "all")),
+    ];
+  }, [scans, findings, targetMap, scanFilters]);
 
   const targetFilterOptions = useMemo(() => {
     return [
@@ -83,26 +106,30 @@ export default function FindingsView() {
 
   // Keep state in sync if URL parameters change
   useEffect(() => {
-    if (targetIdParam) {
-      setTargetFilters([targetIdParam]);
-    } else {
-      setTargetFilters(["all"]);
+    const param = searchParams.get("scanId");
+    if (param) {
+      setScanFilters((prev) => (prev.length === 1 && prev[0] === param ? prev : [param]));
+    }
+  }, [scanIdParam]);
+
+  useEffect(() => {
+    const param = searchParams.get("targetId");
+    if (param) {
+      setTargetFilters((prev) => (prev.length === 1 && prev[0] === param ? prev : [param]));
     }
   }, [targetIdParam]);
 
   useEffect(() => {
-    if (severityParam) {
-      setSeverityFilters([severityParam]);
-    } else {
-      setSeverityFilters(["all"]);
+    const param = searchParams.get("severity");
+    if (param) {
+      setSeverityFilters((prev) => (prev.length === 1 && prev[0] === param ? prev : [param]));
     }
   }, [severityParam]);
 
   useEffect(() => {
-    if (statusParam) {
-      setStatusFilters([statusParam]);
-    } else {
-      setStatusFilters(["all"]);
+    const param = searchParams.get("status");
+    if (param) {
+      setStatusFilters((prev) => (prev.length === 1 && prev[0] === param ? prev : [param]));
     }
   }, [statusParam]);
   const [methodFilters, setMethodFilters] = useState<string[]>(["all"]);
@@ -140,6 +167,10 @@ export default function FindingsView() {
   // Filter Logic
   const filteredFindings = useMemo(() => {
     let result = [...findings];
+
+    if (!scanFilters.includes("all") && scanFilters.length > 0) {
+      result = result.filter((f) => scanFilters.includes(f.scanId));
+    }
 
     if (!targetFilters.includes("all") && targetFilters.length > 0) {
       result = result.filter((f) => targetFilters.includes(f.targetId));
@@ -204,8 +235,11 @@ export default function FindingsView() {
     return result;
   }, [
     findings,
+    scanFilters,
+    targetFilters,
     severityFilters,
     statusFilters,
+    methodFilters,
     searchQuery,
     sortField,
     sortDirection,
@@ -432,6 +466,25 @@ export default function FindingsView() {
         recordsLabel="findings"
         filters={[
           {
+            id: "scan",
+            label: "Scan",
+            selectedValues: scanFilters,
+            onChange: (val) => {
+              const selected = Array.isArray(val) ? val : [val];
+              setScanFilters(selected);
+              const nextParams = new URLSearchParams(searchParams);
+              const lastPicked = selected.find((v) => v !== "all");
+              if (lastPicked && !selected.includes("all") && selected.length === 1) {
+                nextParams.set("scanId", lastPicked);
+              } else {
+                nextParams.delete("scanId");
+              }
+              setSearchParams(nextParams);
+              setCurrentPage(1);
+            },
+            options: scanFilterOptions,
+          },
+          {
             id: "target",
             label: "Target Asset",
             selectedValues: targetFilters,
@@ -523,6 +576,7 @@ export default function FindingsView() {
         ]}
         onResetFilters={() => {
           setSearchQuery("");
+          setScanFilters(["all"]);
           setTargetFilters(["all"]);
           setSeverityFilters(["all"]);
           setStatusFilters(["all"]);
