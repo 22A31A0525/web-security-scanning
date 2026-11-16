@@ -1,9 +1,16 @@
-import { useNavigate } from 'react-router-dom'
-import { useDashboardAnalytics } from '../../store/useAppStore'
+import { useDashboardAnalytics, useAppStore } from "../../store/useAppStore";
 
 export default function Metrics() {
-  const navigate = useNavigate()
-  const { kpis, severityStats, slaAnalytics } = useDashboardAnalytics()
+  const { kpis, severityStats, slaAnalytics } = useDashboardAnalytics();
+  const scans = useAppStore((state) => state.scans);
+
+  const completedScansCount = scans.filter(
+    (s) => s.status === "completed",
+  ).length;
+  const failedScansCount = scans.filter((s) => s.status === "failed").length;
+  const runningScansCount = scans.filter(
+    (s) => s.status === "running" || s.status === "queued",
+  ).length;
 
   return (
     <>
@@ -19,39 +26,21 @@ export default function Metrics() {
         </div>
 
         <div className="flex items-center justify-between py-1">
-          <span
-            onClick={() => navigate('/scans')}
-            className="text-3xl sm:text-4xl font-bold tracking-tight text-heading cursor-pointer hover:underline"
-            title="View all 12 scans"
-          >
-            12
+          <span className="text-3xl sm:text-4xl font-bold tracking-tight text-heading">
+            {scans.length}
           </span>
           <div className="flex flex-col items-start gap-0.5 text-xs">
-            <span
-              onClick={() => navigate('/scans?status=completed')}
-              className="text-desc font-medium hover:underline hover:text-heading cursor-pointer transition-colors"
-              title="View completed scans"
-            >
-              9 passed
+            <span className="text-desc font-medium">
+              {completedScansCount} passed
             </span>
-            <span
-              onClick={() => navigate('/scans?status=failed')}
-              className="text-status-red font-semibold hover:underline cursor-pointer transition-colors"
-              title="View failed scans"
-            >
-              1 failed
+            <span className="text-status-red font-semibold">
+              {failedScansCount} failed
             </span>
           </div>
         </div>
 
         <div className="flex items-center text-xs text-desc font-normal min-h-[16px]">
-          <span
-            onClick={() => navigate('/scans?status=running')}
-            className="hover:underline hover:text-heading cursor-pointer transition-colors"
-            title="View running scans"
-          >
-            {kpis.activeScansCount} running
-          </span>
+          <span>{runningScansCount} active</span>
         </div>
       </section>
 
@@ -71,10 +60,18 @@ export default function Metrics() {
             {kpis.totalOpenFindings}
           </span>
           <div className="flex flex-col items-start gap-0.5 text-xs">
-            <span className="text-status-red font-semibold">{severityStats.critical} Critical</span>
-            <span className="text-status-orange font-medium">{severityStats.high} High</span>
-            <span className="text-status-yellow font-medium">{severityStats.medium} Medium</span>
-            <span className="text-status-blue font-medium">{severityStats.low} Low</span>
+            <span className="text-status-red font-semibold">
+              {severityStats.critical} Critical
+            </span>
+            <span className="text-status-orange font-medium">
+              {severityStats.high} High
+            </span>
+            <span className="text-status-yellow font-medium">
+              {severityStats.medium} Medium
+            </span>
+            <span className="text-status-blue font-medium">
+              {severityStats.low} Low
+            </span>
           </div>
         </div>
 
@@ -99,15 +96,17 @@ export default function Metrics() {
             {slaAnalytics.slaCompliancePct}%
           </span>
           <div className="flex flex-col items-start gap-0.5 text-xs">
-            <span className="text-status-red font-semibold">{slaAnalytics.breachedSlaCount} Breached</span>
-            <span className="text-status-green font-semibold">{slaAnalytics.withinSlaCount} Within SLA</span>
+            <span className="text-status-red font-semibold">
+              {slaAnalytics.breachedSlaCount} Breached
+            </span>
+            <span className="text-status-green font-semibold">
+              {slaAnalytics.withinSlaCount} Within SLA
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center text-xs text-desc font-normal min-h-[16px]">
-          <span>MTTR: {slaAnalytics.overallMttrDays}d avg</span>
-        </div>
+        <div className="flex items-center text-xs text-desc font-normal min-h-[16px]"></div>
       </section>
     </>
-  )
+  );
 }

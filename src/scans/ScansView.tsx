@@ -46,6 +46,22 @@ export default function ScansView() {
   const [targetFilters, setTargetFilters] = useState<string[]>(
     targetIdParam ? [targetIdParam] : ['all']
   )
+
+  useEffect(() => {
+    if (statusParam) {
+      setStatusFilters([statusParam])
+    } else {
+      setStatusFilters(['all'])
+    }
+  }, [statusParam])
+
+  useEffect(() => {
+    if (targetIdParam) {
+      setTargetFilters([targetIdParam])
+    } else {
+      setTargetFilters(['all'])
+    }
+  }, [targetIdParam])
   const [profileFilters, setProfileFilters] = useState<string[]>(['all'])
   const [findingFilters, setFindingFilters] = useState<string[]>(['all'])
   const [currentPage, setCurrentPage] = useState(1)
@@ -53,23 +69,10 @@ export default function ScansView() {
   const [sortField, setSortField] = useState<string | null>('startedAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
-  // Sync filters if URL search params change
-  useEffect(() => {
-    if (statusParam) {
-      setStatusFilters([statusParam])
-    }
-  }, [statusParam])
-
-  useEffect(() => {
-    if (targetIdParam) {
-      setTargetFilters([targetIdParam])
-    }
-  }, [targetIdParam])
-
   // Target Filter Options with Scan Counts
   const targetFilterOptions = useMemo(() => {
     return [
-      { label: 'All Targets', value: 'all' },
+      { label: 'All Targets', value: 'all', count: scans.length },
       ...targets.map((t) => ({
         label: `${t.name} (#${t.id})`,
         value: t.id,
@@ -187,7 +190,7 @@ export default function ScansView() {
             e.stopPropagation()
             handleInspectScan(scan)
           }}
-          className="font-mono text-xs font-semibold text-status-blue hover:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
+          className="font-mono text-xs font-semibold text-status-blue hover:text-heading hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
           title={`Inspect scan #${scan.id}`}
         >
           <span>#{scan.id}</span>
@@ -207,7 +210,7 @@ export default function ScansView() {
             e.stopPropagation()
             navigate(`/targets?targetId=${scan.targetId}`)
           }}
-          className="font-mono text-xs font-semibold text-status-blue hover:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
+          className="font-mono text-xs font-semibold text-status-blue hover:text-heading hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
           title={`Target #${scan.targetId} (${scan.targetName})`}
         >
           <span>#{scan.targetId}</span>
@@ -391,7 +394,7 @@ export default function ScansView() {
         columns={columns}
         data={pagedScans}
         keyExtractor={(item) => item.id}
-        maxHeight="max-h-[620px]"
+        maxHeight="max-h-table-view"
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
@@ -406,11 +409,20 @@ export default function ScansView() {
             label: 'Status',
             selectedValues: statusFilters,
             onChange: (val) => {
-              setStatusFilters(Array.isArray(val) ? val : [val])
+              const selected = Array.isArray(val) ? val : [val]
+              setStatusFilters(selected)
+              const nextParams = new URLSearchParams(searchParams)
+              const lastPicked = selected.find((v) => v !== 'all')
+              if (lastPicked && !selected.includes('all') && selected.length === 1) {
+                nextParams.set('status', lastPicked)
+              } else {
+                nextParams.delete('status')
+              }
+              setSearchParams(nextParams)
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Statuses', value: 'all' },
+              { label: 'All Statuses', value: 'all', count: scans.length },
               { label: 'Running', value: 'running', count: runningCount },
               { label: 'Queued', value: 'queued', count: queuedCount },
               { label: 'Completed', value: 'completed', count: completedScans.length },
@@ -422,7 +434,16 @@ export default function ScansView() {
             label: 'Target',
             selectedValues: targetFilters,
             onChange: (val) => {
-              setTargetFilters(Array.isArray(val) ? val : [val])
+              const selected = Array.isArray(val) ? val : [val]
+              setTargetFilters(selected)
+              const nextParams = new URLSearchParams(searchParams)
+              const lastPicked = selected.find((v) => v !== 'all')
+              if (lastPicked && !selected.includes('all')) {
+                nextParams.set('targetId', lastPicked)
+              } else {
+                nextParams.delete('targetId')
+              }
+              setSearchParams(nextParams)
               setCurrentPage(1)
             },
             options: targetFilterOptions,
@@ -436,10 +457,10 @@ export default function ScansView() {
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Profiles', value: 'all' },
-              { label: 'OWASP Top 10', value: 'owasp_top10' },
-              { label: 'API Security', value: 'api_security' },
-              { label: 'Quick Recon', value: 'quick_recon' },
+              { label: 'All Profiles', value: 'all', count: scans.length },
+              { label: 'OWASP Top 10', value: 'owasp_top10', count: scans.filter((s) => s.profile === 'owasp_top10').length },
+              { label: 'API Security', value: 'api_security', count: scans.filter((s) => s.profile === 'api_security').length },
+              { label: 'Quick Recon', value: 'quick_recon', count: scans.filter((s) => s.profile === 'quick_recon').length },
             ],
           },
           {
@@ -451,7 +472,7 @@ export default function ScansView() {
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Outcomes', value: 'all' },
+              { label: 'All Outcomes', value: 'all', count: scans.length },
               { label: 'Has Critical', value: 'has_critical', count: criticalFindingsCount },
               { label: 'Has High', value: 'has_high', count: highFindingsCount },
               { label: 'Clean Scans', value: 'clean', count: cleanScansCount },

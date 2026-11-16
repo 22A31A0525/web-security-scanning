@@ -59,14 +59,6 @@ export default function App() {
           }
         />
         <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/settings"
           element={
             <ProtectedRoute>

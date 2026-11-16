@@ -1,4 +1,5 @@
 import type { Target, Scan, Finding, Report, ScannerSettings } from '../types/schema'
+import { themeColors } from '../theme/tokens'
 
 /**
  * 8 Enterprise Targets across production, staging, and development environments.
@@ -1186,10 +1187,10 @@ export const mockAnalytics = {
     slaBreachedCount: 2,
   },
   severityDistribution: [
-    { severity: 'critical' as const, count: 11, color: '#f04343' },
-    { severity: 'high' as const, count: 7, color: '#f97316' },
-    { severity: 'medium' as const, count: 9, color: '#eab308' },
-    { severity: 'low' as const, count: 1, color: '#3b82f6' },
+    { severity: 'critical' as const, count: 11, color: themeColors.status.red },
+    { severity: 'high' as const, count: 7, color: themeColors.status.orange },
+    { severity: 'medium' as const, count: 9, color: themeColors.status.yellow },
+    { severity: 'low' as const, count: 1, color: themeColors.status.blue },
   ],
   trendOverTime: [
     { date: 'Aug 2026', discovered: 12, resolved: 8, openBacklog: 4 },
@@ -1214,38 +1215,38 @@ export const mockAnalytics = {
  */
 export const mockSeverityTrends = {
   '30D': [
-    { date: 'Oct 17', critical: 12, high: 16, medium: 20, low: 11 },
-    { date: 'Oct 21', critical: 15, high: 19, medium: 23, low: 13 },
-    { date: 'Oct 25', critical: 11, high: 14, medium: 18, low: 10 },
-    { date: 'Oct 29', critical: 9, high: 12, medium: 16, low: 9 },
-    { date: 'Nov 02', critical: 16, high: 20, medium: 17, low: 9 },
-    { date: 'Nov 06', critical: 18, high: 22, medium: 15, low: 8 },
-    { date: 'Nov 10', critical: 11, high: 10, medium: 11, low: 5 },
-    { date: 'Nov 14', critical: 7, high: 6, medium: 8, low: 3 },
+    { date: 'Oct 17', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 21', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 25', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 29', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 02', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 06', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 10', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 14', critical: 11, high: 7, medium: 9, low: 1 },
   ],
   '90D': [
-    { date: 'Sep 01', critical: 14, high: 19, medium: 22, low: 13 },
-    { date: 'Sep 15', critical: 17, high: 23, medium: 26, low: 15 },
-    { date: 'Oct 01', critical: 20, high: 25, medium: 20, low: 12 },
-    { date: 'Oct 15', critical: 23, high: 27, medium: 18, low: 10 },
-    { date: 'Nov 01', critical: 15, high: 16, medium: 14, low: 7 },
-    { date: 'Nov 14', critical: 7, high: 6, medium: 8, low: 3 },
+    { date: 'Sep 01', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Sep 15', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 01', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 15', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 01', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 14', critical: 11, high: 7, medium: 9, low: 1 },
   ],
   '6M': [
-    { date: 'Jun 2026', critical: 11, high: 15, medium: 19, low: 12 },
-    { date: 'Jul 2026', critical: 21, high: 27, medium: 24, low: 17 },
-    { date: 'Aug 2026', critical: 13, high: 16, medium: 18, low: 13 },
-    { date: 'Sep 2026', critical: 19, high: 24, medium: 22, low: 15 },
-    { date: 'Oct 2026', critical: 14, high: 18, medium: 19, low: 10 },
-    { date: 'Nov 2026', critical: 7, high: 6, medium: 8, low: 3 },
+    { date: 'Jun 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Jul 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Aug 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Sep 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 2026', critical: 11, high: 7, medium: 9, low: 1 },
   ],
   'All': [
-    { date: 'Jun 2026', critical: 11, high: 15, medium: 19, low: 12 },
-    { date: 'Jul 2026', critical: 21, high: 27, medium: 24, low: 17 },
-    { date: 'Aug 2026', critical: 13, high: 16, medium: 18, low: 13 },
-    { date: 'Sep 2026', critical: 19, high: 24, medium: 22, low: 15 },
-    { date: 'Oct 2026', critical: 14, high: 18, medium: 19, low: 10 },
-    { date: 'Nov 2026', critical: 7, high: 6, medium: 8, low: 3 },
+    { date: 'Jun 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Jul 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Aug 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Sep 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Oct 2026', critical: 12, high: 11, medium: 11, low: 5 },
+    { date: 'Nov 2026', critical: 11, high: 7, medium: 9, low: 1 },
   ],
 }
 

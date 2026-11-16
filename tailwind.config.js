@@ -30,6 +30,22 @@ export default {
         'icon-sm': '1rem',    // 16px (inline, chevron, tags, badges)
         'icon-md': '1.25rem', // 20px (inputs, settings, actions)
         'icon-lg': '1.5rem',  // 24px (navbar brand, hero)
+
+        // Centralized Dropdown Geometry Tokens
+        'dropdown-w': '14rem',     // 224px (fixed dropdown width)
+        'dropdown-h': '16rem',     // 256px (fixed dropdown maximum height)
+      },
+      width: {
+        'dropdown': '14rem',       // w-dropdown
+      },
+      height: {
+        'chart': '20rem',          // 320px chart standard
+      },
+      maxHeight: {
+        'chart': '20rem',          // 320px max height cap
+        'dropdown': '16rem',       // max-h-dropdown
+        'table-view': '38.75rem',  // 620px table height
+        'drawer-log': '28.75rem',  // 460px drawer log view
       },
       size: {
         // Centralized Icon Sizing Scale

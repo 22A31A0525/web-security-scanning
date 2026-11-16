@@ -63,14 +63,15 @@ export default function TableFilterBar({
     >
       {/* Top Filter Controls: Search Box + Multiple Filter Dropdowns + Custom Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+        <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* Search Box - Using Project's Exact Input Geometry and Styling */}
-          <div className="w-full sm:w-80 md:w-96 relative">
+          <div className="w-full sm:w-72 md:w-80 shrink-0 relative">
             <Input
               variant="search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
+              className="py-2 text-xs"
               rightElement={
                 searchQuery ? (
                   <button
@@ -132,7 +133,7 @@ export default function TableFilterBar({
                   <div
                     role="listbox"
                     aria-label={filter.label}
-                    className="absolute top-full left-0 mt-2 z-50 w-52 bg-sidebar border border-border rounded-xl p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95 duration-150"
+                    className="absolute top-full left-0 mt-2 z-50 w-dropdown max-h-dropdown overflow-y-auto bg-sidebar border border-border rounded-xl p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95 duration-150"
                   >
                     {filter.options.map((opt) => {
                       const isOptionAll = opt.value === 'all'
@@ -167,13 +168,13 @@ export default function TableFilterBar({
                           <div className="flex items-center gap-2.5 min-w-0">
                             {/* Checkbox Indicator for clear multi-select feedback */}
                             <div
-                              className={`w-4 h-4 rounded flex items-center justify-center transition-colors shrink-0 ${
+                              className={`size-icon-sm rounded flex items-center justify-center transition-colors shrink-0 ${
                                 isSelected
                                   ? 'bg-heading text-canvas border border-heading'
                                   : 'border border-border-input bg-canvas'
                               }`}
                             >
-                              {isSelected && <Check className="size-3 stroke-[3]" />}
+                              {isSelected && <Check className="size-icon-xs stroke-[3]" />}
                             </div>
 
                             <span className={`truncate ${isSelected ? 'text-heading font-medium' : 'text-desc'}`}>

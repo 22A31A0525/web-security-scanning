@@ -1,16 +1,16 @@
-import { useNavigate } from 'react-router-dom'
-import { ArrowUpRight, Activity } from 'lucide-react'
-import Button from '../../ui/Button'
-import { useLiveTasks } from '../../store/useAppStore'
+import { useNavigate } from "react-router-dom";
+import { ArrowUpRight, Activity } from "lucide-react";
+import Button from "../../ui/Button";
+import { useLiveTasks } from "../../store/useAppStore";
 
 export default function LiveScans() {
-  const navigate = useNavigate()
-  const liveTasks = useLiveTasks()
+  const navigate = useNavigate();
+  const liveTasks = useLiveTasks();
 
   return (
     <section
       aria-label="Live Scans"
-      className="col-span-1 h-full min-h-[320px] bg-card border border-border rounded-2xl flex flex-col justify-between overflow-hidden"
+      className="col-span-1 h-[320px] max-h-[320px] bg-card border border-border rounded-2xl flex flex-col justify-between overflow-hidden"
     >
       {/* Top Header Row with Comfortable Sized Action Button */}
       <div className="flex items-center justify-between min-h-[32px] p-4 pb-3">
@@ -26,12 +26,15 @@ export default function LiveScans() {
           type="button"
           variant="secondary"
           size="sm"
-          aria-label="Open live scans"
-          onClick={() => navigate('/scans')}
+          aria-label="Open all scans"
+          onClick={() => navigate("/scans")}
           className="px-3.5 py-1.5 text-xs border border-border shadow-sm"
         >
-          <span>Live scans</span>
-          <ArrowUpRight className="size-icon-sm shrink-0 text-desc" aria-hidden="true" />
+          <span>All scans</span>
+          <ArrowUpRight
+            className="size-icon-sm shrink-0 text-desc"
+            aria-hidden="true"
+          />
         </Button>
       </div>
 
@@ -69,7 +72,9 @@ export default function LiveScans() {
                   {/* Clean Status Text without nested card box or dots */}
                   <span
                     className={`text-xs font-semibold ${
-                      task.status === 'running' ? 'text-status-blue' : 'text-status-yellow'
+                      task.status === "running"
+                        ? "text-status-blue"
+                        : "text-status-yellow"
                     }`}
                   >
                     {task.phase}
@@ -105,5 +110,5 @@ export default function LiveScans() {
         )}
       </div>
     </section>
-  )
+  );
 }

@@ -102,7 +102,7 @@ export default function FindingDetailDrawer({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {/* Vulnerability Title */}
-                <h2 className="text-xl font-bold tracking-tight text-heading">
+                <h2 className="text-h2 text-heading">
                   {finding.title}
                 </h2>
 
@@ -133,7 +133,7 @@ export default function FindingDetailDrawer({
                       title={`Open Target #${finding.targetId} (${finding.targetName})`}
                     >
                       <span>#{finding.targetId}</span>
-                      <ArrowUpRight className="w-3 h-3 shrink-0" />
+                      <ArrowUpRight className="size-icon-xs shrink-0" />
                     </button>
                   </span>
 
@@ -149,7 +149,7 @@ export default function FindingDetailDrawer({
                       title={`Open Scan #${finding.scanId}`}
                     >
                       <span>#{finding.scanId}</span>
-                      <ArrowUpRight className="w-3 h-3 shrink-0" />
+                      <ArrowUpRight className="size-icon-xs shrink-0" />
                     </button>
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export default function FindingDetailDrawer({
                   e.stopPropagation()
                   onClose()
                 }}
-                className="w-8 h-8 rounded-lg text-desc hover:text-heading hover:bg-surface flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="size-icon-lg rounded-lg text-desc hover:text-heading hover:bg-surface flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 title="Close drawer"
                 aria-label="Close drawer"
               >
@@ -312,14 +312,14 @@ export default function FindingDetailDrawer({
                 </div>
 
                 {/* Request / Response Switcher Tabs */}
-                <div className="flex items-center bg-surface border border-border rounded-lg p-0.5 text-xs">
+                <div className="inline-flex rounded-lg border border-border divide-x divide-border overflow-hidden text-xs">
                   <button
                     type="button"
                     onClick={() => setActiveEvidenceTab('request')}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 text-xs font-mono font-medium transition-colors cursor-pointer ${
                       activeEvidenceTab === 'request'
-                        ? 'bg-card text-heading font-semibold shadow-xs'
-                        : 'text-desc hover:text-heading'
+                        ? 'bg-surface text-heading font-semibold'
+                        : 'bg-card text-desc hover:text-heading hover:bg-surface/50'
                     }`}
                   >
                     Request
@@ -327,10 +327,10 @@ export default function FindingDetailDrawer({
                   <button
                     type="button"
                     onClick={() => setActiveEvidenceTab('response')}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 text-xs font-mono font-medium transition-colors cursor-pointer ${
                       activeEvidenceTab === 'response'
-                        ? 'bg-card text-heading font-semibold shadow-xs'
-                        : 'text-desc hover:text-heading'
+                        ? 'bg-surface text-heading font-semibold'
+                        : 'bg-card text-desc hover:text-heading hover:bg-surface/50'
                     }`}
                   >
                     Response
@@ -339,7 +339,7 @@ export default function FindingDetailDrawer({
               </div>
 
               {/* Code Evidence Terminal Box */}
-              <div className="bg-canvas rounded-xl p-4 font-mono text-xs text-body leading-relaxed overflow-y-auto max-h-[460px] border border-border select-text">
+              <div className="bg-canvas rounded-xl p-4 font-mono text-xs text-body leading-relaxed overflow-y-auto max-h-drawer-log border border-border select-text">
                 <pre className="whitespace-pre-wrap break-all">
                   {activeEvidenceTab === 'request'
                     ? finding.evidence?.request ||

@@ -49,7 +49,7 @@ export function isDateInTimeline(
     }
   }
 
-  // Preset durations based on reference date
+  // Preset durations based on reference date (now)
   const now = refDate.getTime()
   const days = filter.preset === '3M' ? 90 : filter.preset === '6M' ? 180 : 365
   const threshold = now - days * 24 * 60 * 60 * 1000

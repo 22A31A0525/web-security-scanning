@@ -9,10 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts'
-import { Activity, ArrowUpRight, X, Info } from 'lucide-react'
-import Button from '../../ui/Button'
+import { Activity, X, Info } from 'lucide-react'
 import { useDashboardAnalytics, useAppStore } from '../../store/useAppStore'
-import { mockSeverityTrends } from '../../data/mockData'
 import type { SeverityTrendPoint, Finding } from '../../types/schema'
 import TimelineFilterPopover, {
   DEFAULT_TIMELINE_FILTER,
@@ -76,119 +74,94 @@ function ScanReportTooltip({
   const targetMap = useMemo(() => new Map(targets.map((t) => [t.id, t])), [targets])
 
   const point = selectedPoint
-  const currentTier = tierConfig[activeSeverity]
-  const tierCount = (point as any)?.[activeSeverity] ?? 0
 
-  // Filter actual findings for the selected severity tier matching this point's time/date
+  // Filter actual findings for the selected severity tier up to this point in time
   const tierFindings = useMemo(() => {
-    if (!point || tierCount === 0) return []
-
-    const matching = timelineFindings.filter((f) => f.severity === activeSeverity)
-
-    if (point?.date && point.date.includes(':')) {
-      const pointHour = parseInt(point.date.split(':')[0], 10)
-      return matching.filter((f) => {
-        const h = new Date(f.discoveredAt).getUTCHours()
-        return h <= pointHour
-      })
-    }
-
-    return matching
-  }, [point, tierCount, activeSeverity, timelineFindings])
-
-  // Only show "Show all" if there are more findings than can be displayed in the 5-item popover list
-  const hasMoreFindings = tierFindings.length > 5 || (tierFindings.length >= 5 && tierCount > 5)
+    if (!point) return []
+    return timelineFindings.filter((f) => {
+      if (f.severity !== activeSeverity) return false
+      if (point.isoDate) {
+        return f.discoveredAt.slice(0, 10) <= point.isoDate
+      }
+      return true
+    })
+  }, [point, activeSeverity, timelineFindings])
 
   if (!point) return null
+
+  const pointFindingsCount = (tier: SeverityTier) => {
+    return timelineFindings.filter((f) => {
+      if (f.severity !== tier) return false
+      if (point.isoDate) {
+        return f.discoveredAt.slice(0, 10) <= point.isoDate
+      }
+      return true
+    }).length
+  }
 
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="bg-card border border-border rounded-2xl shadow-2xl w-80 sm:w-96 max-w-[calc(100vw-3rem)] overflow-hidden"
+      className="bg-card border border-border rounded-2xl shadow-2xl w-96 sm:w-[440px] max-w-[calc(100vw-2rem)] overflow-hidden"
     >
-      {/* Top Row: All 4 Severities interactive tabs + Close button in top-right corner */}
-      <div className="p-2 flex items-center justify-between text-xs gap-1 bg-surface/10">
-        <div className="flex items-center gap-1">
-          {(['critical', 'high', 'medium', 'low'] as const).map((tier) => {
-            const cfg = tierConfig[tier]
+      {/* Header Row: Interactive severity tabs with counts + Close button */}
+      <div className="px-3.5 py-2 min-h-[42px] flex items-center justify-between gap-2 bg-transparent border-b border-border">
+        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+          {(['critical', 'high', 'medium', 'low'] as SeverityTier[]).map((tier) => {
+            const count = pointFindingsCount(tier)
             const isSelected = activeSeverity === tier
-            const count = (point as any)?.[tier] ?? 0
+            const config = tierConfig[tier]
             return (
               <button
                 key={tier}
                 type="button"
                 onClick={() => onSeverityChange(tier)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+                className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shrink-0 ${
                   isSelected
-                    ? 'bg-surface border border-border shadow-sm'
-                    : 'hover:bg-surface/50 border border-transparent opacity-80 hover:opacity-100'
+                    ? `${config.colorClass} bg-surface`
+                    : 'text-desc hover:text-heading hover:bg-surface/50'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden="true" />
-                <span className={`font-medium ${cfg.colorClass}`}>
-                  {cfg.shortLabel}:
-                </span>
-                <span className="text-heading font-bold ml-0.5">{count}</span>
+                <span>{config.shortLabel}</span>
+                <span className="text-[10px] opacity-80">({count})</span>
               </button>
             )
           })}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          title="Close popover"
-          aria-label="Close popover"
-          className="p-1 rounded-lg hover:bg-surface text-desc hover:text-heading transition-colors cursor-pointer shrink-0 ml-1"
-        >
-          <X className="size-3.5 shrink-0" />
-        </button>
-      </div>
 
-      {/* Dynamic Tier Section Header */}
-      <div className="border-t border-border px-3.5 py-1.5 min-h-[38px] flex items-center justify-between bg-surface/30">
-        <div className="flex items-center gap-1.5">
-          <span className={`text-xs font-bold whitespace-nowrap ${currentTier.colorClass}`}>
-            {currentTier.label}
-          </span>
-          <span className="text-[11px] text-desc font-normal">
-            ({tierCount})
-          </span>
-        </div>
-        {hasMoreFindings && (
-          <Button
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
             type="button"
-            variant="secondary"
-            size="sm"
-            aria-label="Show all findings"
-            onClick={() => navigate('/findings')}
-            className="px-2.5 py-1 text-xs border border-border shadow-sm flex items-center gap-1.5"
+            onClick={onClose}
+            title="Close popover"
+            aria-label="Close popover"
+            className="p-1 rounded-lg hover:bg-surface text-desc hover:text-heading transition-colors cursor-pointer shrink-0"
           >
-            <span>Show all</span>
-            <ArrowUpRight className="size-icon-xs text-desc shrink-0" aria-hidden="true" />
-          </Button>
-        )}
+            <X className="size-icon-xs shrink-0" />
+          </button>
+        </div>
       </div>
 
-      {/* Row-level separated records attached directly with divide-y and border-t */}
-      <div className="border-t border-border divide-y divide-border">
-        {tierCount === 0 || tierFindings.length === 0 ? (
+      {/* Row-level separated records with internal scroll */}
+      <div className="border-t border-border divide-y divide-border max-h-56 overflow-y-auto">
+        {tierFindings.length === 0 ? (
           <div className="px-3.5 py-2.5 text-xs text-desc">
             No {activeSeverity} findings recorded at this point
           </div>
         ) : (
-          tierFindings.slice(0, 5).map((finding) => {
+          tierFindings.map((finding) => {
             const target = targetMap.get(finding.targetId)
             const displayUrl = target?.url || finding.location
             return (
               <div
                 key={finding.id}
                 onClick={() => navigate(`/findings?findingId=${finding.id}`)}
-                className="px-3.5 py-2 bg-transparent hover:bg-surface transition-colors duration-150 cursor-pointer space-y-0.5 group"
+                className="px-3.5 py-2 bg-transparent hover:bg-surface transition-colors duration-150 cursor-pointer space-y-0.5"
               >
                 {/* Row 1: Finding Title */}
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className="text-xs font-semibold text-heading truncate flex-1 min-w-0 group-hover:text-primary transition-colors"
+                    className="text-xs font-semibold text-heading truncate flex-1 min-w-0"
                     title={finding.title}
                   >
                     {finding.title}
@@ -202,7 +175,7 @@ function ScanReportTooltip({
                   >
                     {displayUrl}
                   </span>
-                  <span className="text-caption shrink-0">
+                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-surface border border-border text-desc shrink-0 select-none">
                     #{finding.scanId}
                   </span>
                 </div>
@@ -225,9 +198,11 @@ export default function SeverityTrendChart() {
   const [selectedPoint, setSelectedPoint] = useState<any | null>(null)
   const [selectedCoords, setSelectedCoords] = useState<{ x: number; y: number } | null>(null)
 
-  // 1. Filter findings that fall strictly within the active timeline
+  // 1. Filter findings that fall strictly within the active timeline and are active (open / confirmed)
   const activeTimelineFindings = useMemo(() => {
-    return findings.filter((f) => isDateInTimeline(f.discoveredAt, timeline))
+    return findings
+      .filter((f) => f.status === 'open' || f.status === 'confirmed')
+      .filter((f) => isDateInTimeline(f.discoveredAt, timeline))
   }, [findings, timeline])
 
   const criticalFindings = useMemo(() => {
@@ -246,14 +221,6 @@ export default function SeverityTrendChart() {
     }
     return liveStats
   }, [timeline.preset, criticalFindings.length, activeTimelineFindings, liveStats])
-
-  // 3. Generate trend data points accurately matching the selected timeline
-  const trendKey = useMemo(() => {
-    if (timeline.preset === '3M') return '90D'
-    if (timeline.preset === '6M') return '6M'
-    if (timeline.preset === '12M') return 'All'
-    return '30D'
-  }, [timeline.preset])
 
   const trendData = useMemo<SeverityTrendPoint[]>(() => {
     // Custom timeline mode
@@ -320,17 +287,57 @@ export default function SeverityTrendChart() {
       }
     }
 
-    // Preset timeline mode (3M, 6M, 12M)
-    const base =
-      (mockSeverityTrends as Record<string, SeverityTrendPoint[]>)[trendKey] ||
-      mockSeverityTrends['30D']
-    return base.map((point, idx) => {
-      if (idx === base.length - 1) {
-        return { ...point, ...timelineStats }
-      }
-      return point
-    })
-  }, [timeline, activeTimelineFindings, timelineStats, trendKey])
+    // Compute dynamic trend points strictly from actual findings state
+    const calculatePoints = (intervals: { label: string; iso: string }[]) => {
+      return intervals.map((pt) => {
+        const upTo = activeTimelineFindings.filter((f) => f.discoveredAt.slice(0, 10) <= pt.iso)
+        return {
+          date: pt.label,
+          isoDate: pt.iso,
+          critical: upTo.filter((f) => f.severity === 'critical').length,
+          high: upTo.filter((f) => f.severity === 'high').length,
+          medium: upTo.filter((f) => f.severity === 'medium').length,
+          low: upTo.filter((f) => f.severity === 'low').length,
+        }
+      })
+    }
+
+    if (timeline.preset === '3M') {
+      return calculatePoints([
+        { label: 'Sep 01', iso: '2026-09-01' },
+        { label: 'Sep 15', iso: '2026-09-15' },
+        { label: 'Oct 01', iso: '2026-10-01' },
+        { label: 'Oct 15', iso: '2026-10-15' },
+        { label: 'Nov 01', iso: '2026-11-01' },
+        { label: 'Nov 14', iso: '2026-11-14' },
+      ])
+    }
+
+    if (timeline.preset === '6M') {
+      return calculatePoints([
+        { label: 'Jun 2026', iso: '2026-06-30' },
+        { label: 'Jul 2026', iso: '2026-07-31' },
+        { label: 'Aug 2026', iso: '2026-08-31' },
+        { label: 'Sep 2026', iso: '2026-09-30' },
+        { label: 'Oct 2026', iso: '2026-10-31' },
+        { label: 'Nov 2026', iso: '2026-11-14' },
+      ])
+    }
+
+    if (timeline.preset === '12M') {
+      return calculatePoints([
+        { label: 'Dec 2025', iso: '2025-12-31' },
+        { label: 'Feb 2026', iso: '2026-02-28' },
+        { label: 'Apr 2026', iso: '2026-04-30' },
+        { label: 'Jun 2026', iso: '2026-06-30' },
+        { label: 'Aug 2026', iso: '2026-08-31' },
+        { label: 'Oct 2026', iso: '2026-10-31' },
+        { label: 'Nov 2026', iso: '2026-11-14' },
+      ])
+    }
+
+    return []
+  }, [timeline, activeTimelineFindings, findings])
 
   const hasData = trendData.length > 0
 
@@ -382,7 +389,7 @@ export default function SeverityTrendChart() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={trendData}
-                margin={{ top: 12, right: 16, left: -20, bottom: 0 }}
+                margin={{ top: 16, right: 20, left: 0, bottom: 12 }}
                 onClick={(e: any) => {
                   if (e && e.activePayload && e.activePayload.length) {
                     const payload = e.activePayload[0].payload
@@ -422,6 +429,14 @@ export default function SeverityTrendChart() {
                   fontSize={11}
                   tickLine={false}
                   axisLine={{ stroke: colors.border }}
+                  label={{
+                    value: 'Discovery Timeline',
+                    position: 'insideBottom',
+                    offset: -6,
+                    fill: colors.caption,
+                    fontSize: 10,
+                    fontWeight: 500,
+                  }}
                 />
 
                 <YAxis
@@ -429,7 +444,19 @@ export default function SeverityTrendChart() {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  domain={[0, 'auto']}
+                  domain={[0, 15]}
+                  ticks={[0, 5, 10, 15]}
+                  allowDecimals={false}
+                  label={{
+                    value: 'Active Vulnerabilities Count',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 12,
+                    fill: colors.caption,
+                    fontSize: 10,
+                    fontWeight: 500,
+                    style: { textAnchor: 'middle' },
+                  }}
                 />
 
                 {/* Dotted indicator line on hover - NO popover on hover! */}
@@ -553,27 +580,35 @@ export default function SeverityTrendChart() {
               </AreaChart>
             </ResponsiveContainer>
 
-            {/* Popover shown ONLY on User Selection (Click) - smart space-aware positioning */}
+            {/* Popover shown ONLY on User Selection (Click) - dynamically anchored near click coordinates */}
             {selectedPoint && (() => {
               const containerWidth = chartContainerRef.current?.clientWidth || 700
-              const popoverWidth = 360
+              const containerHeight = chartContainerRef.current?.clientHeight || 340
+              const popoverWidth = 440
+              const popoverHeight = 260
               const clickX = selectedCoords?.x ?? 200
-              const spaceOnRight = containerWidth - clickX
+              const clickY = selectedCoords?.y ?? 80
 
-              // If there's enough space on the right, position to the right of the vertical line
-              // Otherwise, position to the left of the vertical line
-              const idealLeft = spaceOnRight >= popoverWidth + 30
-                ? clickX + 24
-                : clickX - popoverWidth - 24
+              // Dynamic horizontal placement:
+              // If click is in the right half, position to the left of the point, else to the right
+              let left = clickX > containerWidth / 2
+                ? clickX - popoverWidth - 16
+                : clickX + 16
 
-              const clampedLeft = Math.max(12, Math.min(idealLeft, containerWidth - popoverWidth - 12))
+              // Clamp left so it stays cleanly inside container
+              left = Math.max(12, Math.min(left, containerWidth - popoverWidth - 12))
+
+              // Dynamic vertical placement:
+              // Align near the point's Y coordinate, clamped so it never overflows top or bottom
+              let top = clickY - 60
+              top = Math.max(12, Math.min(top, containerHeight - popoverHeight - 12))
 
               return (
                 <div
                   className="absolute z-30 animate-in fade-in zoom-in-95 duration-150"
                   style={{
-                    left: clampedLeft,
-                    top: 12,
+                    left,
+                    top,
                   }}
                 >
                   <ScanReportTooltip
@@ -593,27 +628,51 @@ export default function SeverityTrendChart() {
       {/* Bottom Row: Left Severities + Bottom-Right Info Hint */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-desc whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveSeverity('critical')}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+              activeSeverity === 'critical' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
+            }`}
+          >
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-red" aria-hidden="true" />
-            <span className="font-medium text-desc">Critical ({timelineStats.critical})</span>
-          </div>
-          <div className="flex items-center gap-1.5">
+            <span>Critical ({timelineStats.critical})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSeverity('high')}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+              activeSeverity === 'high' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
+            }`}
+          >
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-orange" aria-hidden="true" />
-            <span className="font-medium text-desc">High ({timelineStats.high})</span>
-          </div>
-          <div className="flex items-center gap-1.5">
+            <span>High ({timelineStats.high})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSeverity('medium')}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+              activeSeverity === 'medium' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
+            }`}
+          >
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-yellow" aria-hidden="true" />
-            <span className="font-medium text-desc">Medium ({timelineStats.medium})</span>
-          </div>
-          <div className="flex items-center gap-1.5">
+            <span>Medium ({timelineStats.medium})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSeverity('low')}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+              activeSeverity === 'low' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
+            }`}
+          >
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-blue" aria-hidden="true" />
-            <span className="font-medium text-desc">Low ({timelineStats.low})</span>
-          </div>
+            <span>Low ({timelineStats.low})</span>
+          </button>
         </div>
 
         {/* Bottom Right: High-visibility Info Note */}
         <div className="flex items-center gap-1.5 text-xs text-desc font-medium shrink-0 self-start sm:self-auto">
-          <Info className="size-3.5 text-desc shrink-0" aria-hidden="true" />
+          <Info className="size-icon-xs text-desc shrink-0" aria-hidden="true" />
           <span>Click any point on the chart to analyze findings</span>
         </div>
       </div>

@@ -12,26 +12,48 @@ export default function TargetsView() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const targetIdParam = searchParams.get('targetId')
+  const authParam = searchParams.get('auth')
   const targets = useEnrichedTargets()
   const deleteTarget = useAppStore((state) => state.deleteTarget)
   const addScan = useAppStore((state) => state.addScan)
   const updateTarget = useAppStore((state) => state.updateTarget)
 
-  // Drawer states
-  const [inspectedTarget, setInspectedTarget] = useState<TargetWithTelemetry | null>(null)
+  // Derive active inspected target directly from URL parameter ?targetId=... or local state
+  const inspectedTarget = useMemo(() => {
+    if (targetIdParam) {
+      return targets.find((t) => t.id === targetIdParam) || null
+    }
+    return null
+  }, [targets, targetIdParam])
+
   const [editingTarget, setEditingTarget] = useState<TargetWithTelemetry | null>(null)
+
+  const handleInspectTarget = (target: TargetWithTelemetry) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('targetId', target.id)
+    setSearchParams(nextParams)
+  }
+
+  const handleCloseInspect = () => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('targetId')
+    setSearchParams(nextParams)
+  }
 
   // Local Filter & Pagination State
   const [searchQuery, setSearchQuery] = useState('')
-
-  // Sync searchQuery when targetId is provided in URL
-  useEffect(() => {
-    if (targetIdParam) {
-      setSearchQuery(targetIdParam)
-    }
-  }, [targetIdParam])
   const [environmentFilters, setEnvironmentFilters] = useState<string[]>(['all'])
-  const [authFilters, setAuthFilters] = useState<string[]>(['all'])
+  const [authFilters, setAuthFilters] = useState<string[]>(
+    authParam ? [authParam] : ['all']
+  )
+
+  useEffect(() => {
+    if (authParam) {
+      setAuthFilters([authParam])
+    } else {
+      setAuthFilters(['all'])
+    }
+  }, [authParam])
   const [riskFilters, setRiskFilters] = useState<string[]>(['all'])
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
@@ -133,8 +155,8 @@ export default function TargetsView() {
       cell: (target) => (
         <button
           type="button"
-          onClick={() => setInspectedTarget(target)}
-          className="font-mono text-xs font-semibold text-status-blue hover:text-blue-400 hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
+          onClick={() => handleInspectTarget(target)}
+          className="font-mono text-xs font-semibold text-status-blue hover:text-heading hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors group text-left"
           title={`Inspect Target #${target.id}`}
         >
           <span>#{target.id}</span>
@@ -304,7 +326,7 @@ export default function TargetsView() {
             {
               label: 'Inspect',
               icon: <Eye className="size-icon-xs text-desc" />,
-              onClick: () => setInspectedTarget(target),
+              onClick: () => handleInspectTarget(target),
             },
             {
               label: 'Edit',
@@ -330,7 +352,7 @@ export default function TargetsView() {
         columns={columns}
         data={pagedTargets}
         keyExtractor={(item) => item.id}
-        maxHeight="max-h-[620px]"
+        maxHeight="max-h-table-view"
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
@@ -357,7 +379,7 @@ export default function TargetsView() {
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Environments', value: 'all' },
+              { label: 'All Environments', value: 'all', count: targets.length },
               { label: 'Production', value: 'production', count: prodAssets },
               { label: 'Staging', value: 'staging', count: stagingAssets },
               { label: 'Dev', value: 'dev', count: devAssets },
@@ -368,11 +390,20 @@ export default function TargetsView() {
             label: 'Scope',
             selectedValues: authFilters,
             onChange: (val) => {
-              setAuthFilters(Array.isArray(val) ? val : [val])
+              const selected = Array.isArray(val) ? val : [val]
+              setAuthFilters(selected)
+              const nextParams = new URLSearchParams(searchParams)
+              const lastPicked = selected.find((v) => v !== 'all')
+              if (lastPicked && !selected.includes('all') && selected.length === 1) {
+                nextParams.set('auth', lastPicked)
+              } else {
+                nextParams.delete('auth')
+              }
+              setSearchParams(nextParams)
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Scopes', value: 'all' },
+              { label: 'All Scopes', value: 'all', count: targets.length },
               { label: 'Authenticated', value: 'auth', count: authenticatedCount },
               { label: 'Unauthenticated', value: 'unauth', count: totalAssets - authenticatedCount },
             ],
@@ -386,7 +417,7 @@ export default function TargetsView() {
               setCurrentPage(1)
             },
             options: [
-              { label: 'All Grades', value: 'all' },
+              { label: 'All Grades', value: 'all', count: targets.length },
               { label: 'Grade A', value: 'A', count: gradeACount },
               { label: 'Grade B', value: 'B', count: gradeBCount },
               { label: 'Grade C', value: 'C', count: gradeCCount },
@@ -417,14 +448,14 @@ export default function TargetsView() {
       <TargetDetailDrawer
         target={inspectedTarget}
         isOpen={Boolean(inspectedTarget)}
-        onClose={() => setInspectedTarget(null)}
+        onClose={handleCloseInspect}
         onEdit={(t) => {
-          setInspectedTarget(null)
+          handleCloseInspect()
           setEditingTarget(t as TargetWithTelemetry)
         }}
         onRunScan={async (t) => {
           const newScan = await addScan({ targetId: t.id })
-          setInspectedTarget(null)
+          handleCloseInspect()
           if (newScan?.id) {
             navigate(`/scans?scanId=${newScan.id}`)
           } else {
@@ -437,6 +468,12 @@ export default function TargetsView() {
       <CreateTargetDrawer
         isOpen={Boolean(editingTarget)}
         onClose={() => setEditingTarget(null)}
+        onBack={() => {
+          if (editingTarget) {
+            handleInspectTarget(editingTarget)
+          }
+          setEditingTarget(null)
+        }}
         targetToEdit={editingTarget}
         onUpdateTarget={updateTarget}
       />

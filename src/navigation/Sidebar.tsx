@@ -5,33 +5,42 @@ import {
   Target,
   Activity,
   ShieldAlert,
-  FileText,
   Key,
   ArrowLeft,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
+import { useAppStore } from '../store/useAppStore'
 
 export default function Sidebar() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
+  const targets = useAppStore((state) => state.targets)
+  const scans = useAppStore((state) => state.scans)
+  const findings = useAppStore((state) => state.findings)
 
   const isSettings = location.pathname === '/settings'
 
+  interface NavItem {
+    label: string
+    path: string
+    icon: typeof LayoutDashboard
+    count?: number
+  }
+
   // Dynamic navigation items: when on /settings, displays only APIs; otherwise displays main navigation
-  const mainNavItems = [
+  const mainNavItems: NavItem[] = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Targets', path: '/targets', icon: Target },
-    { label: 'Scans', path: '/scans', icon: Activity },
-    { label: 'Findings', path: '/findings', icon: ShieldAlert },
-    { label: 'Reports', path: '/reports', icon: FileText },
+    { label: 'Targets', path: '/targets', icon: Target, count: targets.length },
+    { label: 'Scans', path: '/scans', icon: Activity, count: scans.length },
+    { label: 'Findings', path: '/findings', icon: ShieldAlert, count: findings.length },
   ]
 
-  const settingsNavItems = [
+  const settingsNavItems: NavItem[] = [
     { label: 'APIs', path: '/settings', icon: Key },
   ]
 
-  const navItems = isSettings ? settingsNavItems : mainNavItems
+  const navItems: NavItem[] = isSettings ? settingsNavItems : mainNavItems
 
   return (
     <aside
@@ -71,10 +80,20 @@ export default function Sidebar() {
             <Link
               key={item.label}
               to={item.path}
-              title={collapsed ? item.label : undefined}
-              aria-label={item.label}
+              title={
+                collapsed
+                  ? typeof item.count === 'number'
+                    ? `${item.label} (${item.count})`
+                    : item.label
+                  : undefined
+              }
+              aria-label={
+                typeof item.count === 'number'
+                  ? `${item.label} (${item.count})`
+                  : item.label
+              }
               aria-current={isActive ? 'page' : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
                 collapsed ? 'justify-center' : ''
               } ${
                 isActive
@@ -82,8 +101,33 @@ export default function Sidebar() {
                   : 'text-desc hover:text-heading hover:bg-surface active:bg-surface'
               }`}
             >
-              <Icon className={`size-icon-sm shrink-0 ${isActive ? 'text-heading' : 'text-desc'}`} aria-hidden="true" />
-              {!collapsed && <span>{item.label}</span>}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative flex items-center justify-center">
+                  <Icon
+                    className={`size-icon-sm shrink-0 ${isActive ? 'text-heading' : 'text-desc'}`}
+                    aria-hidden="true"
+                  />
+                  {collapsed && typeof item.count === 'number' && (
+                    <span
+                      className={`absolute -top-1.5 -right-2 text-[10px] font-mono font-semibold leading-none select-none transition-colors ${
+                        isActive ? 'text-heading' : 'text-caption'
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </div>
+              {!collapsed && typeof item.count === 'number' && (
+                <span
+                  className={`text-xs font-mono font-medium shrink-0 transition-colors ${
+                    isActive ? 'text-heading' : 'text-caption'
+                  }`}
+                >
+                  {item.count}
+                </span>
+              )}
             </Link>
           )
         })}

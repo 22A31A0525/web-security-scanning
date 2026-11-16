@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { themeColors } from '../theme/tokens'
 import type {
   Target,
   Scan,
@@ -423,6 +424,7 @@ export function useEnrichedTargets(): TargetWithTelemetry[] {
 export function useEnrichedScans(): EnrichedScan[] {
   const scans = useAppStore((state) => state.scans)
   const targets = useAppStore((state) => state.targets)
+  const findings = useAppStore((state) => state.findings)
 
   const targetMap = new Map<string, Target>()
   targets.forEach((t) => targetMap.set(t.id, t))
@@ -435,8 +437,19 @@ export function useEnrichedScans(): EnrichedScan[] {
     else if (s.status === 'failed') phase = 'Aborted'
     else if (s.status === 'queued') phase = 'Queued'
 
+    // Compute live findings counts dynamically from findings store
+    const scanFindings = findings.filter((f) => f.scanId === s.id)
+    const liveFindingsCount = scanFindings.length > 0 ? {
+      critical: scanFindings.filter((f) => f.severity === 'critical').length,
+      high: scanFindings.filter((f) => f.severity === 'high').length,
+      medium: scanFindings.filter((f) => f.severity === 'medium').length,
+      low: scanFindings.filter((f) => f.severity === 'low').length,
+      info: scanFindings.filter((f) => f.severity === 'info').length,
+    } : s.findingsCount
+
     return {
       ...s,
+      findingsCount: liveFindingsCount,
       targetName: tgt?.name || 'Unknown Target',
       targetUrl: tgt?.url || 'https://unknown.target.com',
       environment: tgt?.environment || 'production',
@@ -609,16 +622,12 @@ export function useDashboardAnalytics(
     return point
   })
 
-  // 3. Authentication Scope Distribution
-  const targetMap = new Map(targets.map((t) => [t.id, t]))
-  const authScansCount = scans.filter((s) => {
-    const t = targetMap.get(s.targetId)
-    return t ? t.authenticated : false
-  }).length
-  const unauthScansCount = scans.length - authScansCount
+  // 3. Authentication Scope Distribution (Directly matches targets in AuthScopeChart)
+  const authTargetsCount = targets.filter((t) => t.authenticated).length
+  const unauthTargetsCount = targets.length - authTargetsCount
   const authScopeData: AuthScopeSlice[] = [
-    { name: 'Authenticated', value: authScansCount, color: '#3b82f6' },
-    { name: 'Unauthenticated', value: unauthScansCount, color: '#71717a' },
+    { name: 'Authenticated', value: authTargetsCount, color: themeColors.scope.authenticated },
+    { name: 'Unauthenticated', value: unauthTargetsCount, color: themeColors.scope.unauthenticated },
   ]
 
   // 4. Target Stacked Findings
@@ -679,9 +688,9 @@ export function useDashboardAnalytics(
   const openCount = findings.filter((f) => f.status === 'open' || f.status === 'confirmed').length
   const fpCount = findings.filter((f) => f.status === 'false_positive').length
   const resolutionData: ResolutionStatusSlice[] = [
-    { name: 'Resolved / Fixed', value: resolvedCount, color: '#22c55e' },
-    { name: 'Open / Unresolved', value: openCount, color: '#f04343' },
-    { name: 'Accepted / False Positive', value: fpCount, color: '#71717a' },
+    { name: 'Resolved / Fixed', value: resolvedCount, color: themeColors.status.green },
+    { name: 'Open / Unresolved', value: openCount, color: themeColors.status.red },
+    { name: 'Accepted / False Positive', value: fpCount, color: themeColors.caption },
   ]
 
   // 7. Live Telemetry metrics
@@ -746,10 +755,10 @@ export function useDashboardAnalytics(
       : 'Critical Risk'
   const postureColor =
     postureScore >= 80
-      ? '#22c55e'
+      ? themeColors.status.green
       : postureScore >= 65
-      ? '#eab308'
-      : '#f04343'
+      ? themeColors.status.yellow
+      : themeColors.status.red
   const authCoveragePct =
     targets.length > 0
       ? Math.round((targets.filter((t) => t.authenticated).length / targets.length) * 100)

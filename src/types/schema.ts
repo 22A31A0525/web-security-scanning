@@ -277,6 +277,7 @@ export interface SeverityStats {
 
 export interface SeverityTrendPoint {
   date: string
+  isoDate?: string
   critical: number
   high: number
   medium: number

@@ -1,20 +1,14 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  X,
-  ExternalLink,
-  Clock,
-  ArrowUpRight,
-  RotateCcw,
-} from 'lucide-react'
-import type { EnrichedScan } from '../types/schema'
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { X, ExternalLink, Clock, ArrowUpRight, RotateCcw } from "lucide-react";
+import type { EnrichedScan } from "../types/schema";
 
 interface ScanDetailDrawerProps {
-  scan: EnrichedScan | null
-  isOpen: boolean
-  onClose: () => void
-  onCancelScan?: (scanId: string) => void
-  onRerunScan?: (scan: EnrichedScan) => void
+  scan: EnrichedScan | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onCancelScan?: (scanId: string) => void;
+  onRerunScan?: (scan: EnrichedScan) => void;
 }
 
 export default function ScanDetailDrawer({
@@ -24,38 +18,46 @@ export default function ScanDetailDrawer({
   onCancelScan,
   onRerunScan,
 }: ScanDetailDrawerProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
+      if (e.key === "Escape" && isOpen) {
+        onClose();
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
-  if (!isOpen || !scan) return null
+  if (!isOpen || !scan) return null;
 
-  const isRunning = scan.status === 'running'
-  const isCompleted = scan.status === 'completed'
-  const isFailed = scan.status === 'failed'
-  const isQueued = scan.status === 'queued'
+  const isRunning = scan.status === "running";
+  const isCompleted = scan.status === "completed";
+  const isFailed = scan.status === "failed";
+  const isQueued = scan.status === "queued";
 
   const totalFindings =
     (scan.findingsCount.critical || 0) +
     (scan.findingsCount.high || 0) +
     (scan.findingsCount.medium || 0) +
-    (scan.findingsCount.low || 0)
+    (scan.findingsCount.low || 0);
 
   // Format scan start date string
   const formattedStartTime = scan.startedAt
-    ? new Date(scan.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : '00:00:00'
+    ? new Date(scan.startedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "00:00:00";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 overflow-hidden"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-canvas/70 backdrop-blur-xs transition-opacity duration-200"
@@ -74,8 +76,8 @@ export default function ScanDetailDrawer({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {/* Target Name as high-contrast prominent title */}
-                <h2 className="text-xl font-bold tracking-tight text-heading truncate">
-                  {scan.targetName || 'Web Target Scan'}
+                <h2 className="text-h2 text-heading truncate">
+                  {scan.targetName || "Web Target Scan"}
                 </h2>
 
                 {/* Scan ID, Target ID & Status Indicator */}
@@ -84,32 +86,34 @@ export default function ScanDetailDrawer({
                     #{scan.id}
                   </span>
                   <span className="font-mono text-xs text-desc flex items-center gap-1">
-                    Target:{' '}
+                    Target:{" "}
                     <button
                       type="button"
                       onClick={() => {
-                        onClose()
-                        navigate(`/targets?targetId=${scan.targetId}`)
+                        onClose();
+                        navigate(`/targets?targetId=${scan.targetId}`);
                       }}
                       className="text-status-blue font-semibold hover:underline cursor-pointer inline-flex items-center gap-0.5"
                       title={`Open Target #${scan.targetId}`}
                     >
                       <span>#{scan.targetId}</span>
-                      <ArrowUpRight className="w-3 h-3 shrink-0" />
+                      <ArrowUpRight className="size-icon-xs shrink-0" />
                     </button>
                   </span>
                   <span
                     className={`font-semibold text-xs ${
                       isCompleted
-                        ? 'text-status-green'
+                        ? "text-status-green"
                         : isRunning
-                        ? 'text-status-blue'
-                        : isFailed
-                        ? 'text-status-red'
-                        : 'text-caption'
+                          ? "text-status-blue"
+                          : isFailed
+                            ? "text-status-red"
+                            : "text-caption"
                     }`}
                   >
-                    {scan.status.charAt(0).toUpperCase() + scan.status.slice(1)}
+                    {scan?.status
+                      ? scan.status.charAt(0).toUpperCase() + scan.status.slice(1)
+                      : ""}
                   </span>
                 </div>
 
@@ -131,10 +135,10 @@ export default function ScanDetailDrawer({
               <button
                 type="button"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  onClose()
+                  e.stopPropagation();
+                  onClose();
                 }}
-                className="w-8 h-8 rounded-lg text-desc hover:text-heading hover:bg-surface flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="size-icon-lg rounded-lg text-desc hover:text-heading hover:bg-surface flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 title="Close drawer"
                 aria-label="Close drawer"
               >
@@ -148,8 +152,8 @@ export default function ScanDetailDrawer({
                 <button
                   type="button"
                   onClick={() => {
-                    onClose()
-                    navigate(`/findings?scanId=${scan.id}`)
+                    onClose();
+                    navigate(`/findings?scanId=${scan.id}`);
                   }}
                   className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-heading hover:bg-body active:bg-desc text-canvas text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs"
                 >
@@ -175,11 +179,13 @@ export default function ScanDetailDrawer({
                   onClick={() => onRerunScan(scan)}
                   className={`flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
                     isFailed
-                      ? 'bg-heading hover:bg-body active:bg-desc text-canvas shadow-xs'
-                      : 'border border-border hover:bg-surface text-desc hover:text-heading'
+                      ? "bg-heading hover:bg-body active:bg-desc text-canvas shadow-xs"
+                      : "border border-border hover:bg-surface text-desc hover:text-heading"
                   }`}
                 >
-                  <RotateCcw className={`size-icon-xs ${isFailed ? 'text-canvas' : 'text-desc'}`} />
+                  <RotateCcw
+                    className={`size-icon-xs ${isFailed ? "text-canvas" : "text-desc"}`}
+                  />
                   <span>Rerun Scan</span>
                 </button>
               )}
@@ -187,7 +193,8 @@ export default function ScanDetailDrawer({
               <div className="ml-auto flex items-center gap-1.5 text-xs text-desc font-mono">
                 <Clock className="size-icon-xs text-caption" />
                 <span>
-                  {Math.floor(scan.durationSec / 60)}m {String(scan.durationSec % 60).padStart(2, '0')}s
+                  {Math.floor(scan.durationSec / 60)}m{" "}
+                  {String(scan.durationSec % 60).padStart(2, "0")}s
                 </span>
               </div>
             </div>
@@ -209,10 +216,10 @@ export default function ScanDetailDrawer({
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${
                     isCompleted
-                      ? 'bg-status-green'
+                      ? "bg-status-green"
                       : isFailed
-                      ? 'bg-status-red'
-                      : 'bg-status-blue'
+                        ? "bg-status-red"
+                        : "bg-status-blue"
                   }`}
                   style={{ width: `${scan.progress}%` }}
                 />
@@ -228,11 +235,11 @@ export default function ScanDetailDrawer({
                 <div>
                   <div className="text-desc text-[11px]">Audit Profile</div>
                   <div className="text-xs font-semibold text-heading mt-1">
-                    {scan.profile === 'api_security'
-                      ? 'API & GraphQL'
-                      : scan.profile === 'quick_recon'
-                      ? 'Quick Recon'
-                      : 'OWASP Top 10'}
+                    {scan.profile === "api_security"
+                      ? "API & GraphQL"
+                      : scan.profile === "quick_recon"
+                        ? "Quick Recon"
+                        : "OWASP Top 10"}
                   </div>
                 </div>
 
@@ -246,7 +253,7 @@ export default function ScanDetailDrawer({
                 <div>
                   <div className="text-desc text-[11px]">Trigger Source</div>
                   <div className="text-xs font-semibold text-heading mt-1">
-                    {scan.triggeredBy || 'Automated Pipeline'}
+                    {scan.triggeredBy || "Automated Pipeline"}
                   </div>
                 </div>
               </div>
@@ -293,8 +300,8 @@ export default function ScanDetailDrawer({
               ) : (
                 <div className="text-xs text-desc py-1">
                   {isRunning
-                    ? 'Scan engine is currently crawling endpoints; vulnerabilities will stream live upon detection.'
-                    : 'Clean scan. Zero security vulnerabilities identified during execution.'}
+                    ? "Scan engine is currently crawling endpoints; vulnerabilities will stream live upon detection."
+                    : "Clean scan. Zero security vulnerabilities identified during execution."}
                 </div>
               )}
             </div>
@@ -309,86 +316,152 @@ export default function ScanDetailDrawer({
                   stdout
                 </span>
               </div>
-              <div className="bg-canvas rounded-xl p-4 font-mono text-xs text-body leading-relaxed overflow-y-auto max-h-[460px] border border-border space-y-2 select-text">
+              <div className="bg-canvas rounded-xl p-4 font-mono text-xs text-body leading-relaxed overflow-y-auto max-h-drawer-log border border-border space-y-2 select-text">
                 <div className="flex items-start gap-2">
-                  <span className="text-caption font-semibold shrink-0">[{formattedStartTime}]</span>
-                  <span className="text-body font-medium">Initializing DAST crawler engine and allocating worker thread...</span>
+                  <span className="text-caption font-semibold shrink-0">
+                    [{formattedStartTime}]
+                  </span>
+                  <span className="text-body font-medium">
+                    Initializing DAST crawler engine and allocating worker
+                    thread...
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-caption font-semibold shrink-0">[{formattedStartTime}]</span>
+                  <span className="text-caption font-semibold shrink-0">
+                    [{formattedStartTime}]
+                  </span>
                   <span className="text-body font-medium">
-                    Target host seed:{' '}
+                    Target host seed:{" "}
                     <span className="text-heading underline decoration-border font-bold">
                       {scan.targetUrl || scan.targetId}
                     </span>
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-caption font-semibold shrink-0">[{formattedStartTime}]</span>
-                  <span className="text-status-green font-semibold">✓ TLS handshake verified (TLSv1.3, Cipher AES-256-GCM)</span>
+                  <span className="text-caption font-semibold shrink-0">
+                    [{formattedStartTime}]
+                  </span>
+                  <span className="text-status-green font-semibold">
+                    ✓ TLS handshake verified (TLSv1.3, Cipher AES-256-GCM)
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-caption font-semibold shrink-0">[{formattedStartTime}]</span>
-                  <span className="text-body font-medium">Crawling robots.txt, sitemap.xml, OpenAPI schemas, and dynamic client links...</span>
+                  <span className="text-caption font-semibold shrink-0">
+                    [{formattedStartTime}]
+                  </span>
+                  <span className="text-body font-medium">
+                    Crawling robots.txt, sitemap.xml, OpenAPI schemas, and
+                    dynamic client links...
+                  </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-caption font-semibold shrink-0">[+1m 02s]</span>
-                  <span className="text-body font-medium">Attack surface discovered: {scan.scannedEndpointsCount || 0} routable endpoints mapped across REST routes.</span>
+                  <span className="text-caption font-semibold shrink-0">
+                    [+1m 02s]
+                  </span>
+                  <span className="text-body font-medium">
+                    Attack surface discovered: {scan.scannedEndpointsCount || 0}{" "}
+                    routable endpoints mapped across REST routes.
+                  </span>
                 </div>
                 {scan.progress > 25 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-caption font-semibold shrink-0">[+2m 14s]</span>
-                    <span className="text-status-blue font-semibold">Active fuzzing: injecting SQLi, NoSQL, and blind polyglot vectors across parameters...</span>
+                    <span className="text-caption font-semibold shrink-0">
+                      [+2m 14s]
+                    </span>
+                    <span className="text-status-blue font-semibold">
+                      Active fuzzing: injecting SQLi, NoSQL, and blind polyglot
+                      vectors across parameters...
+                    </span>
                   </div>
                 )}
                 {scan.progress > 45 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-caption font-semibold shrink-0">[+3m 48s]</span>
-                    <span className="text-body font-medium">Cross-Site Scripting (XSS) probe: evaluating DOM reflections and CSP header boundaries.</span>
+                    <span className="text-caption font-semibold shrink-0">
+                      [+3m 48s]
+                    </span>
+                    <span className="text-body font-medium">
+                      Cross-Site Scripting (XSS) probe: evaluating DOM
+                      reflections and CSP header boundaries.
+                    </span>
                   </div>
                 )}
                 {scan.progress > 60 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-caption font-semibold shrink-0">[+5m 30s]</span>
-                    <span className="text-status-yellow font-semibold">Testing session lifecycle: token entropy, refresh token reuse, and CORS origin validation.</span>
+                    <span className="text-caption font-semibold shrink-0">
+                      [+5m 30s]
+                    </span>
+                    <span className="text-status-yellow font-semibold">
+                      Testing session lifecycle: token entropy, refresh token
+                      reuse, and CORS origin validation.
+                    </span>
                   </div>
                 )}
                 {scan.progress > 80 && (
                   <div className="flex items-start gap-2">
-                    <span className="text-caption font-semibold shrink-0">[+8m 15s]</span>
-                    <span className="text-body font-medium">OWASP API top 10 auditing: BOLA / IDOR parameter tampering evaluation completed.</span>
+                    <span className="text-caption font-semibold shrink-0">
+                      [+8m 15s]
+                    </span>
+                    <span className="text-body font-medium">
+                      OWASP API top 10 auditing: BOLA / IDOR parameter tampering
+                      evaluation completed.
+                    </span>
                   </div>
                 )}
                 {isCompleted && (
                   <>
                     <div className="flex items-start gap-2">
                       <span className="text-caption font-semibold shrink-0">
-                        [+{scan.durationSec > 15 ? `${Math.floor((scan.durationSec - 15) / 60)}m ${String((scan.durationSec - 15) % 60).padStart(2, '0')}s` : '17m 45s'}]
+                        [+
+                        {scan.durationSec > 15
+                          ? `${Math.floor((scan.durationSec - 15) / 60)}m ${String((scan.durationSec - 15) % 60).padStart(2, "0")}s`
+                          : "17m 45s"}
+                        ]
                       </span>
-                      <span className="text-body font-medium">Generating structured security evidence archive and aggregating findings.</span>
+                      <span className="text-body font-medium">
+                        Generating structured security evidence archive and
+                        aggregating findings.
+                      </span>
                     </div>
                     <div className="flex items-start gap-2 pt-1.5 border-t border-border text-status-green font-bold">
                       <span className="text-caption font-semibold shrink-0">
-                        [+{scan.durationSec > 0 ? `${Math.floor(scan.durationSec / 60)}m ${String(scan.durationSec % 60).padStart(2, '0')}s` : '18m 00s'}]
+                        [+
+                        {scan.durationSec > 0
+                          ? `${Math.floor(scan.durationSec / 60)}m ${String(scan.durationSec % 60).padStart(2, "0")}s`
+                          : "18m 00s"}
+                        ]
                       </span>
-                      <span>✓ Scan completed successfully. 100% of attack surface audited ({totalFindings} findings recorded).</span>
+                      <span>
+                        ✓ Scan completed successfully. 100% of attack surface
+                        audited ({totalFindings} findings recorded).
+                      </span>
                     </div>
                   </>
                 )}
                 {isRunning && (
                   <div className="pt-1.5 border-t border-border text-status-blue font-semibold">
-                    <span>Crawler worker active — streaming real-time request/response telemetry...</span>
+                    <span>
+                      Crawler worker active — streaming real-time
+                      request/response telemetry...
+                    </span>
                   </div>
                 )}
                 {isFailed && (
                   <div className="flex items-start gap-2 pt-1.5 border-t border-border text-status-red font-bold">
-                    <span className="text-caption font-semibold shrink-0">[+12m 00s]</span>
-                    <span>✕ Error: Upstream service timeout (HTTP 503 Gateway Unavailable). Audit halted.</span>
+                    <span className="text-caption font-semibold shrink-0">
+                      [+12m 00s]
+                    </span>
+                    <span>
+                      ✕ Error: Upstream service timeout (HTTP 503 Gateway
+                      Unavailable). Audit halted.
+                    </span>
                   </div>
                 )}
                 {isQueued && (
                   <div className="flex items-center gap-2 text-desc font-medium italic">
-                    <span>Task queued. Awaiting available scanner worker slot in pool.</span>
+                    <span>
+                      Task queued. Awaiting available scanner worker slot in
+                      pool.
+                    </span>
                   </div>
                 )}
               </div>
@@ -397,5 +470,5 @@ export default function ScanDetailDrawer({
         </aside>
       </div>
     </div>
-  )
+  );
 }

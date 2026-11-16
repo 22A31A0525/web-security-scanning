@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Play, Plus } from 'lucide-react'
+import { Play, Plus, Download } from 'lucide-react'
 import Navigation from '../navigation/Navigation'
 import Sidebar from '../navigation/Sidebar'
 import SecurityScore from './components/SecurityScore'
@@ -14,7 +14,10 @@ import ScansView from '../scans/ScansView'
 import TargetsView from '../targets/TargetsView'
 import FindingsView from '../findings/FindingsView'
 import CreateTargetDrawer from '../targets/CreateTargetDrawer'
-import { useAppStore } from '../store/useAppStore'
+import CreateScanDrawer from '../scans/CreateScanDrawer'
+import DownloadReportDrawer from '../findings/DownloadReportDrawer'
+import ApiSettingsView from '../settings/ApiSettingsView'
+import { useAppStore, useEnrichedFindings } from '../store/useAppStore'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -22,10 +25,14 @@ export default function Dashboard() {
   const path = location.pathname
   const addTarget = useAppStore((state) => state.addTarget)
   const [isCreateTargetOpen, setIsCreateTargetOpen] = useState(false)
+  const [isCreateScanOpen, setIsCreateScanOpen] = useState(false)
+  const [isDownloadDrawerOpen, setIsDownloadDrawerOpen] = useState(false)
+  const findings = useEnrichedFindings()
 
   const isTargets = path === '/targets'
   const isScans = path === '/scans'
   const isFindings = path === '/findings'
+  const isSettings = path === '/settings'
   const isDashboard =
     path === '/dashboard' ||
     path === '/' ||
@@ -58,17 +65,32 @@ export default function Dashboard() {
                       Real-time DAST vulnerability metrics and scan coverage across web targets
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="md"
-                    aria-label="Run scan"
-                    onClick={() => navigate('/scans')}
-                    className="shrink-0 self-start sm:self-auto cursor-pointer"
-                  >
-                    <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
-                    <span>Run scan</span>
-                  </Button>
+                  <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      aria-label="Download report"
+                      onClick={() => setIsDownloadDrawerOpen(true)}
+                      className="px-3.5 py-2 shrink-0 border border-border"
+                    >
+                      <Download className="size-icon-sm text-desc" aria-hidden="true" />
+                      <span className="text-sm text-body hover:text-heading whitespace-nowrap">
+                        Download report
+                      </span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="md"
+                      aria-label="Run scan"
+                      onClick={() => setIsCreateScanOpen(true)}
+                      className="cursor-pointer"
+                    >
+                      <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
+                      <span>Run scan</span>
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Single Row Grid: Overall 4 Cards of equal 1fr size */}
@@ -148,7 +170,8 @@ export default function Dashboard() {
                     variant="primary"
                     size="md"
                     aria-label="Launch scan"
-                    className="shrink-0 self-start sm:self-auto"
+                    onClick={() => setIsCreateScanOpen(true)}
+                    className="shrink-0 self-start sm:self-auto cursor-pointer"
                   >
                     <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
                     <span>Launch scan</span>
@@ -163,7 +186,7 @@ export default function Dashboard() {
             {/* Findings View: Vulnerability Catalog */}
             {isFindings && (
               <>
-                {/* Section Header */}
+                {/* Section Header with Download Report Action */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h1 className="text-h1 text-heading">
@@ -173,11 +196,27 @@ export default function Dashboard() {
                       Correlated security findings, CVE/CWE triage, and remediation tracking
                     </p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    aria-label="Download report"
+                    onClick={() => setIsDownloadDrawerOpen(true)}
+                    className="shrink-0 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Download className="size-icon-xs shrink-0" aria-hidden="true" />
+                    <span>Download report</span>
+                  </Button>
                 </div>
 
                 {/* Centralized Data Table */}
                 <FindingsView />
               </>
+            )}
+
+            {/* Settings View: API Configuration */}
+            {isSettings && (
+              <ApiSettingsView />
             )}
           </div>
         </main>
@@ -188,6 +227,22 @@ export default function Dashboard() {
         isOpen={isCreateTargetOpen}
         onClose={() => setIsCreateTargetOpen(false)}
         onCreateTarget={addTarget}
+      />
+
+      {/* Create / Launch Scan Multi-Step Drawer */}
+      <CreateScanDrawer
+        isOpen={isCreateScanOpen}
+        onClose={() => setIsCreateScanOpen(false)}
+        onScanLaunched={() => {
+          navigate('/scans')
+        }}
+      />
+
+      {/* Download Security Report Drawer */}
+      <DownloadReportDrawer
+        isOpen={isDownloadDrawerOpen}
+        onClose={() => setIsDownloadDrawerOpen(false)}
+        findings={findings}
       />
     </div>
   )

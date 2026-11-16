@@ -37,8 +37,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || (label ? `input-${generatedId}` : undefined)
     const errorId = error ? `${inputId || generatedId}-error` : undefined
 
-    const baseInputStyles =
-      'w-full !bg-transparent border border-border-input rounded-xl py-3.5 text-base text-heading placeholder:text-placeholder focus:outline-none focus:border-border-focus focus:ring-2 focus:ring-border-focus hover:border-desc transition-colors'
+    const baseInputStyles = className.includes('py-') || className.includes('text-')
+      ? `w-full !bg-transparent border border-border-input rounded-xl text-heading placeholder:text-placeholder focus:outline-none focus:border-border-focus focus:ring-2 focus:ring-border-focus hover:border-desc transition-colors ${className}`
+      : `w-full !bg-transparent border border-border-input rounded-xl py-3.5 text-base text-heading placeholder:text-placeholder focus:outline-none focus:border-border-focus focus:ring-2 focus:ring-border-focus hover:border-desc transition-colors ${className}`
 
     const paddingStyles = isSearch
       ? commandBadge
