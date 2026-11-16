@@ -33,14 +33,8 @@ export default function Login() {
     navigate('/dashboard')
   }
 
-  const handleFillDemo = () => {
-    setEmail('analyst@security.io')
-    setPassword('password123')
-    if (error) setError(null)
-  }
-
   return (
-    <div className="min-h-screen w-full bg-canvas flex flex-col items-center justify-center p-6 sm:p-10 select-none">
+    <div className="min-h-screen w-full bg-canvas flex flex-col items-center justify-center p-6 sm:p-10">
       {/* Centered Brand Header Above Container */}
       <div className="flex flex-col items-center mb-8 text-center">
         <div className="flex items-center gap-3 mb-2">
@@ -110,9 +104,9 @@ export default function Login() {
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
-                  <EyeOff className="w-5 h-5 shrink-0" />
+                  <EyeOff className="size-icon-md shrink-0" />
                 ) : (
-                  <Eye className="w-5 h-5 shrink-0" />
+                  <Eye className="size-icon-md shrink-0" />
                 )}
               </button>
             }
@@ -121,18 +115,10 @@ export default function Login() {
           {/* Inline Helper Note with Auto-Fill Trigger using Sub Button component */}
           <div className="flex items-center justify-between text-sm text-body pt-1">
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-desc shrink-0" />
+              <Lock className="size-icon-sm text-desc shrink-0" />
               <span className="text-xs sm:text-sm text-caption sm:text-body">Default demo: analyst@security.io / password123</span>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleFillDemo}
-              className="ml-2 shrink-0 border border-border"
-            >
-              Fill demo
-            </Button>
+            
           </div>
 
           {/* Submit Action Button: Main Button (Primary) with clean bg shift (no glow), text remains black */}

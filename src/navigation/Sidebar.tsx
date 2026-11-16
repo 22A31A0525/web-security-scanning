@@ -6,6 +6,8 @@ import {
   Activity,
   ShieldAlert,
   FileText,
+  Key,
+  ArrowLeft,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -14,8 +16,10 @@ export default function Sidebar() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
 
-  // Plain List: All navigation items in one continuous list (no subsection headers or divider)
-  const navItems = [
+  const isSettings = location.pathname === '/settings'
+
+  // Dynamic navigation items: when on /settings, displays only APIs; otherwise displays main navigation
+  const mainNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Targets', path: '/targets', icon: Target },
     { label: 'Scans', path: '/scans', icon: Activity },
@@ -23,14 +27,38 @@ export default function Sidebar() {
     { label: 'Reports', path: '/reports', icon: FileText },
   ]
 
+  const settingsNavItems = [
+    { label: 'APIs', path: '/settings', icon: Key },
+  ]
+
+  const navItems = isSettings ? settingsNavItems : mainNavItems
+
   return (
     <aside
+      aria-label="Sidebar navigation"
       className={`h-full bg-sidebar flex flex-col justify-between shrink-0 select-none border-r-0 transition-[width] duration-300 ease-in-out ${
         collapsed ? 'w-16' : 'w-56 sm:w-60'
       }`}
     >
       {/* Navigation Items (Single Plain List) */}
-      <div className="p-3 space-y-1 overflow-hidden">
+      <nav aria-label="Navigation links" className="p-3 space-y-1 overflow-hidden">
+        {/* Context Exit / Back Navigation when in Settings */}
+        {isSettings && (
+          <div className="pb-1 mb-1">
+            <Link
+              to="/dashboard"
+              title={collapsed ? 'Back to Dashboard' : undefined}
+              aria-label="Back to Dashboard"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-desc hover:text-heading hover:bg-surface active:bg-surface transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
+                collapsed ? 'justify-center' : ''
+              }`}
+            >
+              <ArrowLeft className="size-icon-sm shrink-0 text-desc" aria-hidden="true" />
+              {!collapsed && <span>Back to Dashboard</span>}
+            </Link>
+          </div>
+        )}
+
         {navItems.map((item) => {
           const Icon = item.icon
           // Auto-select Dashboard when at '/' or '/dashboard', otherwise match exact path
@@ -44,7 +72,9 @@ export default function Sidebar() {
               key={item.label}
               to={item.path}
               title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 active:outline-none select-none ${
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
                 collapsed ? 'justify-center' : ''
               } ${
                 isActive
@@ -52,28 +82,30 @@ export default function Sidebar() {
                   : 'text-desc hover:text-heading hover:bg-surface active:bg-surface'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-heading' : 'text-desc'}`} />
+              <Icon className={`size-icon-sm shrink-0 ${isActive ? 'text-heading' : 'text-desc'}`} aria-hidden="true" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           )
         })}
-      </div>
+      </nav>
 
-      {/* Bottom Collapse / Expand Button */}
-      <div className="p-3">
+      {/* Bottom Collapse / Expand Button with top border attached to sidebar */}
+      <div className="p-3 border-t border-border">
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-desc hover:text-heading hover:bg-surface active:bg-surface rounded-xl transition-colors cursor-pointer outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 active:outline-none select-none ${
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
+          className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-desc hover:text-heading hover:bg-surface active:bg-surface rounded-xl transition-colors cursor-pointer outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
             collapsed ? 'justify-center' : ''
           }`}
         >
           {collapsed ? (
-            <PanelLeftOpen className="w-4 h-4 shrink-0 text-desc" />
+            <PanelLeftOpen className="size-icon-sm shrink-0 text-desc" aria-hidden="true" />
           ) : (
             <>
-              <PanelLeftClose className="w-4 h-4 shrink-0 text-desc" />
+              <PanelLeftClose className="size-icon-sm shrink-0 text-desc" aria-hidden="true" />
               <span>Collapse</span>
             </>
           )}

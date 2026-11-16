@@ -4,6 +4,7 @@ import {
   writeBearerToken,
   clearBearerToken,
 } from '../api/auth'
+import { useAppStore } from './useAppStore'
 
 interface User {
   email: string
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: (email: string, token: string) => {
     writeBearerToken(token)
+    useAppStore.getState().login()
     set({
       token,
       isAuthenticated: true,
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     clearBearerToken()
+    useAppStore.getState().logout()
     set({
       token: null,
       isAuthenticated: false,

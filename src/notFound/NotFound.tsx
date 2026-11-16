@@ -5,7 +5,7 @@ export default function NotFound() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen w-full bg-canvas flex flex-col items-center justify-center p-6 text-center select-none">
+    <div className="min-h-screen w-full bg-canvas flex flex-col items-center justify-center p-6 text-center">
       {/* 404 Header and Description matching design wireframe */}
       <div className="max-w-md flex flex-col items-center">
         <h1 className="text-h1 text-heading tracking-tight mb-3">

@@ -9,6 +9,13 @@
     @apply bg-canvas text-heading;
     min-height: 100vh;
   }
+
+  /* Ensure all form inputs and textareas are transparent across all browsers */
+  input,
+  textarea,
+  select {
+    background-color: transparent !important;
+  }
 }
 
 /* Centralized Custom Sleek Dark Scrollbar */
@@ -35,3 +42,36 @@
   scrollbar-width: thin;
   scrollbar-color: theme('colors.border') theme('colors.canvas');
 }
+
+/* Suppress browser focus outlines/pill clutter on SVG and Recharts interactive elements */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
+svg,
+svg * {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Explicit Target Authentication Scope utilities (Theme fallback) */
+.bg-scope-authenticated {
+  background-color: #38bdf8;
+}
+.text-scope-authenticated {
+  color: #38bdf8;
+}
+.border-scope-authenticated {
+  border-color: #38bdf8;
+}
+.bg-scope-unauthenticated {
+  background-color: #64748b;
+}
+.text-scope-unauthenticated {
+  color: #64748b;
+}
+.border-scope-unauthenticated {
+  border-color: #64748b;
+}
+

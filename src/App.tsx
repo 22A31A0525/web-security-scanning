@@ -66,6 +66,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 404 Fallback for Unspecified Routes (Guarded: redirects unauthenticated users to /login) */}
         <Route
