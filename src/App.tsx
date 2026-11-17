@@ -1,7 +1,11 @@
-import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './auth/Login'
+import Layout from './layouts/Layout'
 import Dashboard from './dashboard/Dashboard'
+import TargetsPage from './targets/TargetsPage'
+import ScansPage from './scans/ScansPage'
+import FindingsPage from './findings/FindingsPage'
+import ApiSettingsView from './settings/ApiSettingsView'
 import NotFound from './notFound/NotFound'
 import { useAuthStore } from './store/useAuthStore'
 
@@ -25,57 +29,23 @@ export default function App() {
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
         />
 
-        {/* Connected Protected Routes */}
+        {/* Protected App Routes using Layout and Dedicated Route Views */}
         <Route
-          path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/targets"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/scans"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/findings"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/targets" element={<TargetsPage />} />
+          <Route path="/scans" element={<ScansPage />} />
+          <Route path="/findings" element={<FindingsPage />} />
+          <Route path="/settings" element={<ApiSettingsView />} />
+        </Route>
 
-        {/* 404 Fallback for Unspecified Routes (Guarded: redirects unauthenticated users to /login) */}
-        <Route
-          path="*"
-          element={
-            <ProtectedRoute>
-              <NotFound />
-            </ProtectedRoute>
-          }
-        />
+        {/* 404 Fallback for Unspecified Routes */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

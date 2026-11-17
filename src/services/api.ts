@@ -114,18 +114,22 @@ export const api = {
   async createTarget(data: Partial<Target>): Promise<Target> {
     const maxIdNum = dbTargets.reduce((max, t) => {
       const match = t.id.match(/\d+/)
-      return match ? Math.max(max, parseInt(match[0], 10)) : max
+      if (match) {
+        const val = parseInt(match[0], 10)
+        return !isNaN(val) ? Math.max(max, val) : max
+      }
+      return max
     }, 0)
     const newTarget: Target = {
       id: `tgt_${String(maxIdNum + 1).padStart(2, '0')}`,
       name: data.name || 'New Target Asset',
-      url: data.url || 'https://target.acme.com',
+      url: data.url || '--',
       environment: data.environment || 'production',
       authenticated: data.authenticated ?? false,
       authConfig: data.authConfig,
       lastScannedAt: new Date().toISOString(),
       openFindings: 0,
-      riskScore: 'A',
+      riskScore: data.riskScore || 'A',
       description: data.description || 'Target enrolled into continuous DAST monitoring.',
     }
     dbTargets = [newTarget, ...dbTargets]
@@ -161,7 +165,11 @@ export const api = {
   async createScan(data: Partial<Scan> & { targetId: string }): Promise<Scan> {
     const maxScanNum = dbScans.reduce((max, s) => {
       const match = s.id.match(/\d+/)
-      return match ? Math.max(max, parseInt(match[0], 10)) : max
+      if (match) {
+        const val = parseInt(match[0], 10)
+        return !isNaN(val) ? Math.max(max, val) : max
+      }
+      return max
     }, 100)
     const newScan: Scan = {
       id: `scan_${maxScanNum + 1}`,
@@ -195,7 +203,12 @@ export const api = {
   async cancelScan(id: string): Promise<Scan> {
     const idx = dbScans.findIndex((s) => s.id === id)
     if (idx === -1) throw new Error(`Scan ${id} not found`)
-    dbScans[idx] = { ...dbScans[idx], status: 'failed' as ScanStatus, progress: 100 }
+    const currentScan = dbScans[idx]
+    dbScans[idx] = {
+      ...currentScan,
+      status: 'failed' as ScanStatus,
+      completedAt: currentScan.completedAt || new Date().toISOString(),
+    }
     saveToStorage(STORAGE_KEYS.scans, dbScans)
     return Promise.resolve({ ...dbScans[idx] })
   },
@@ -213,22 +226,51 @@ export const api = {
   async updateFindingStatus(id: string, status: FindingStatus): Promise<Finding> {
     const idx = dbFindings.findIndex((f) => f.id === id)
     if (idx === -1) throw new Error(`Finding ${id} not found`)
-    dbFindings[idx] = { ...dbFindings[idx], status }
+    const updatedFinding = { ...dbFindings[idx], status }
+    dbFindings[idx] = updatedFinding
     saveToStorage(STORAGE_KEYS.findings, dbFindings)
+
+    // Recalculate target's open findings count
+    const targetId = updatedFinding.targetId
+    if (targetId) {
+      const targetOpenCount = dbFindings.filter(
+        (f) => f.targetId === targetId && (f.status === 'open' || f.status === 'confirmed')
+      ).length
+      dbTargets = dbTargets.map((t) => (t.id === targetId ? { ...t, openFindings: targetOpenCount } : t))
+      saveToStorage(STORAGE_KEYS.targets, dbTargets)
+    }
+
     return Promise.resolve({ ...dbFindings[idx] })
   },
 
   async bulkUpdateFindingStatus(ids: string[], status: FindingStatus): Promise<Finding[]> {
     const updated: Finding[] = []
+    const affectedTargetIds = new Set<string>()
     dbFindings = dbFindings.map((f) => {
       if (ids.includes(f.id)) {
         const item = { ...f, status }
         updated.push(item)
+        if (f.targetId) affectedTargetIds.add(f.targetId)
         return item
       }
       return f
     })
     saveToStorage(STORAGE_KEYS.findings, dbFindings)
+
+    // Recalculate affected targets' open findings count
+    if (affectedTargetIds.size > 0) {
+      dbTargets = dbTargets.map((t) => {
+        if (affectedTargetIds.has(t.id)) {
+          const count = dbFindings.filter(
+            (f) => f.targetId === t.id && (f.status === 'open' || f.status === 'confirmed')
+          ).length
+          return { ...t, openFindings: count }
+        }
+        return t
+      })
+      saveToStorage(STORAGE_KEYS.targets, dbTargets)
+    }
+
     return Promise.resolve(updated)
   },
 
@@ -243,11 +285,16 @@ export const api = {
   },
 
   async createReport(data: Partial<Report>): Promise<Report> {
+    const fallbackScan = dbScans[0]
+    const fallbackTarget = fallbackScan ? dbTargets.find((t) => t.id === fallbackScan.targetId) : dbTargets[0]
+    const targetName = data.target || fallbackTarget?.name || 'All Monitored Targets'
+    const scanId = data.scanId || fallbackScan?.id || 'scan_all'
+
     const newReport: Report = {
       id: `rpt_${String(dbReports.length + 1).padStart(2, '0')}`,
-      scanId: data.scanId || 'scan_118',
-      target: data.target || 'Acme Production Target',
-      title: data.title || `${data.target || 'Acme Production Target'} — Security Evaluation`,
+      scanId,
+      target: targetName,
+      title: data.title || `${targetName} — Security Evaluation`,
       framework: data.framework || 'OWASP Top 10 Audit',
       createdAt: new Date().toISOString(),
       findings: data.findings ?? 0,

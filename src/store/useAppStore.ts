@@ -182,19 +182,23 @@ export const useAppStore = create<AppState>((set) => ({
       updates.status = 'completed'
       updates.completedAt = new Date().toISOString()
     }
-    await api.updateScan(id, updates)
-    set((state) => ({
-      scans: state.scans.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }))
+    const updatedScan = await api.updateScan(id, updates)
+    set((state) => {
+      const nextScans = state.scans.map((s) => (s.id === id ? { ...s, ...updates, ...updatedScan } : s))
+      saveToStorage(STORAGE_KEYS.scans, nextScans)
+      return { scans: nextScans }
+    })
   },
 
   cancelScan: async (id) => {
-    await api.cancelScan(id)
-    set((state) => ({
-      scans: state.scans.map((s) =>
-        s.id === id ? { ...s, status: 'failed' as ScanStatus, progress: 100 } : s
-      ),
-    }))
+    const updated = await api.cancelScan(id)
+    set((state) => {
+      const nextScans = state.scans.map((s) =>
+        s.id === id ? { ...s, ...updated } : s
+      )
+      saveToStorage(STORAGE_KEYS.scans, nextScans)
+      return { scans: nextScans }
+    })
   },
 
   // Findings
@@ -388,7 +392,7 @@ export function useEnrichedTargets(): TargetWithTelemetry[] {
 
     const recentScans = targetScans.slice(0, 3).map((s) => ({
       id: s.id,
-      status: s.status === 'queued' ? ('running' as const) : (s.status as 'completed' | 'running' | 'failed'),
+      status: s.status as 'completed' | 'running' | 'failed' | 'queued',
       duration: `${Math.round(s.durationSec / 60)}m ${s.durationSec % 60}s`,
       findingsFound:
         s.findingsCount.critical +
@@ -451,7 +455,7 @@ export function useEnrichedScans(): EnrichedScan[] {
       ...s,
       findingsCount: liveFindingsCount,
       targetName: tgt?.name || 'Unknown Target',
-      targetUrl: tgt?.url || 'https://unknown.target.com',
+      targetUrl: tgt?.url || '--',
       environment: tgt?.environment || 'production',
       phase,
     }
@@ -473,7 +477,7 @@ export function useEnrichedFindings(): EnrichedFinding[] {
     return {
       ...f,
       targetName: tgt?.name || 'Unknown Target',
-      targetUrl: tgt?.url || 'https://target.acme.com',
+      targetUrl: tgt?.url || '--',
       targetEnv: tgt?.environment || 'production',
     }
   })
@@ -559,7 +563,7 @@ export function useLiveTasks(): LiveTaskItem[] {
       id: s.id,
       taskId: `#${s.id}`,
       targetName: tgt?.name || 'Web Target Scan',
-      targetUrl: tgt ? tgt.url.replace(/^https?:\/\//, '') : 'target.acme.com',
+      targetUrl: tgt ? tgt.url.replace(/^https?:\/\//, '') : '--',
       profile: profileLabel,
       status: s.status as 'running' | 'queued',
       phase,
@@ -598,7 +602,7 @@ export function useDashboardAnalytics(
     (f) => f.status === 'open' || f.status === 'confirmed'
   )
 
-  const refDate = new Date('2026-11-14T12:00:00Z')
+  const refDate = new Date()
 
   const targetTimelineFindings = activeFindings
   const owaspTimelineFindings = activeFindings
@@ -712,8 +716,8 @@ export function useDashboardAnalytics(
       ? Math.round(
           (resolvedFindings.reduce((sum, f) => {
             const ageDays =
-              (refDate.getTime() - new Date(f.discoveredAt).getTime()) / (1000 * 60 * 60 * 24)
-            return sum + Math.max(1, ageDays)
+              Math.max(0.1, (refDate.getTime() - new Date(f.discoveredAt).getTime()) / (1000 * 60 * 60 * 24))
+            return sum + ageDays
           }, 0) /
             resolvedFindings.length) *
             10
@@ -729,11 +733,23 @@ export function useDashboardAnalytics(
     slaBreachedCount: activeFindings.filter((f) => (f.slaDaysRemaining ?? 1) <= 0).length,
   }
 
+  // CVSS-aligned security posture penalty weights per open vulnerability:
+  // - Critical: 2.4 penalty points (immediate exploitability, urgent triage)
+  // - High: 1.4 penalty points (significant threat, SLA priority)
+  // - Medium: 0.5 penalty points (moderate attack vector)
+  // - Low: 0.1 penalty points (informational / minor hygiene)
+  const SEVERITY_WEIGHTS = {
+    CRITICAL: 2.4,
+    HIGH: 1.4,
+    MEDIUM: 0.5,
+    LOW: 0.1,
+  } as const
+
   const penalty =
-    severityStats.critical * 2.4 +
-    severityStats.high * 1.4 +
-    severityStats.medium * 0.5 +
-    severityStats.low * 0.1
+    severityStats.critical * SEVERITY_WEIGHTS.CRITICAL +
+    severityStats.high * SEVERITY_WEIGHTS.HIGH +
+    severityStats.medium * SEVERITY_WEIGHTS.MEDIUM +
+    severityStats.low * SEVERITY_WEIGHTS.LOW
   const postureScore = Math.max(15, Math.min(100, Math.round(100 - penalty)))
   const postureGrade =
     postureScore >= 90

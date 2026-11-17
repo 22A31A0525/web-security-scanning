@@ -162,7 +162,7 @@ export interface TargetWithTelemetry extends Target {
   }>
   recentScans: Array<{
     id: string
-    status: 'completed' | 'running' | 'failed'
+    status: 'completed' | 'running' | 'failed' | 'queued'
     duration: string
     findingsFound: number
     date: string
