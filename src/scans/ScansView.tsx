@@ -6,9 +6,26 @@ import type { DataTableColumn } from '../components/table/types'
 import { useAppStore, useEnrichedScans } from '../store/useAppStore'
 import type { EnrichedScan } from '../types/schema'
 import ScanDetailDrawer from './ScanDetailDrawer'
+import ScanStatusBadge from './components/ScanStatusBadge'
 import Button from '../ui/Button'
 
-export default function ScansView() {
+export interface ScansViewProps {
+  initialStatusFilter?: string[]
+  hideFilterBar?: boolean
+  hidePagination?: boolean
+  title?: string
+  subtitle?: string
+  maxHeight?: string
+}
+
+export default function ScansView({
+  initialStatusFilter,
+  hideFilterBar = false,
+  hidePagination = false,
+  title,
+  subtitle,
+  maxHeight = 'max-h-table-view',
+}: ScansViewProps = {}) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const scanIdParam = searchParams.get('scanId')
@@ -42,20 +59,25 @@ export default function ScansView() {
 
   // Local Filter & Pagination State
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilters, setStatusFilters] = useState<string[]>(
-    statusParam ? [statusParam] : ['all']
-  )
+  const [statusFilters, setStatusFilters] = useState<string[]>(() => {
+    if (initialStatusFilter && initialStatusFilter.length > 0) return initialStatusFilter
+    return statusParam ? [statusParam] : ['all']
+  })
   const [targetFilters, setTargetFilters] = useState<string[]>(
     targetIdParam ? [targetIdParam] : ['all']
   )
 
   useEffect(() => {
+    if (initialStatusFilter && initialStatusFilter.length > 0) {
+      setStatusFilters(initialStatusFilter)
+      return
+    }
     if (statusParam) {
       setStatusFilters([statusParam])
     } else {
       setStatusFilters(['all'])
     }
-  }, [statusParam])
+  }, [statusParam, initialStatusFilter])
 
   useEffect(() => {
     if (targetIdParam) {
@@ -257,30 +279,15 @@ export default function ScansView() {
     {
       id: 'status',
       header: 'Status',
-      width: '110px',
+      width: '120px',
       sortable: true,
-      cell: (scan) => {
-        let textColor = 'text-status-green'
-        let label = 'Completed'
-        if (scan.status === 'running') {
-          textColor = 'text-status-blue'
-          label = scan.phase || (scan.progress > 50 ? 'Auditing' : 'Crawling')
-        } else if (scan.status === 'queued') {
-          textColor = 'text-status-yellow'
-          label = 'Queued'
-        } else if (scan.status === 'failed') {
-          textColor = 'text-status-red'
-          label = 'Failed'
-        } else if (scan.status === 'cancelled') {
-          textColor = 'text-caption'
-          label = 'Cancelled'
-        }
-        return (
-          <span className={`text-xs font-semibold ${textColor}`}>
-            {label}
-          </span>
-        )
-      },
+      cell: (scan) => (
+        <ScanStatusBadge
+          status={scan.status}
+          phase={scan.phase}
+          progress={scan.progress}
+        />
+      ),
     },
     {
       id: 'profile',
@@ -415,132 +422,167 @@ export default function ScansView() {
   ]
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
+      {/* Optional Custom Header if provided */}
+      {title && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-heading whitespace-nowrap">{title}</h2>
+            {subtitle && <p className="text-xs text-desc mt-0.5">{subtitle}</p>}
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            aria-label="View all scans in repository"
+            onClick={() => navigate('/scans')}
+            className="px-3.5 py-1.5 text-xs border border-border shadow-xs"
+          >
+            <span>All scans</span>
+            <ArrowUpRight className="size-icon-sm shrink-0 text-desc" aria-hidden="true" />
+          </Button>
+        </div>
+      )}
+
       {/* Centralized High-Density Data Table */}
       <DataTable<EnrichedScan>
         columns={columns}
-        data={pagedScans}
+        data={hidePagination ? filteredScans : pagedScans}
         keyExtractor={(item) => item.id}
-        maxHeight="max-h-table-view"
+        maxHeight={maxHeight}
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        searchQuery={hideFilterBar ? undefined : searchQuery}
+        onSearchChange={hideFilterBar ? undefined : setSearchQuery}
         searchPlaceholder="Search scans by ID, target asset, or profile..."
         totalRecords={scans.length}
         recordsLabel="scans"
-        filters={[
-          {
-            id: 'status',
-            label: 'Status',
-            selectedValues: statusFilters,
-            onChange: (val) => {
-              const selected = Array.isArray(val) ? val : [val]
-              setStatusFilters(selected)
-              const nextParams = new URLSearchParams(searchParams)
-              const lastPicked = selected.find((v) => v !== 'all')
-              if (lastPicked && !selected.includes('all') && selected.length === 1) {
-                nextParams.set('status', lastPicked)
-              } else {
-                nextParams.delete('status')
-              }
-              setSearchParams(nextParams)
-              setCurrentPage(1)
-            },
-            options: [
-              { label: 'All Statuses', value: 'all', count: scans.length },
-              { label: 'Running', value: 'running', count: runningCount },
-              { label: 'Queued', value: 'queued', count: queuedCount },
-              { label: 'Completed', value: 'completed', count: completedScans.length },
-              { label: 'Failed', value: 'failed', count: failedCount },
-              { label: 'Cancelled', value: 'cancelled', count: scans.filter((s) => s.status === 'cancelled').length },
-            ],
-          },
-          {
-            id: 'target',
-            label: 'Target',
-            selectedValues: targetFilters,
-            onChange: (val) => {
-              const selected = Array.isArray(val) ? val : [val]
-              setTargetFilters(selected)
-              const nextParams = new URLSearchParams(searchParams)
-              const lastPicked = selected.find((v) => v !== 'all')
-              if (lastPicked && !selected.includes('all')) {
-                nextParams.set('targetId', lastPicked)
-              } else {
-                nextParams.delete('targetId')
-              }
-              setSearchParams(nextParams)
-              setCurrentPage(1)
-            },
-            options: targetFilterOptions,
-          },
-          {
-            id: 'profile',
-            label: 'Profile',
-            selectedValues: profileFilters,
-            onChange: (val) => {
-              setProfileFilters(Array.isArray(val) ? val : [val])
-              setCurrentPage(1)
-            },
-            options: [
-              { label: 'All Profiles', value: 'all', count: scans.length },
-              { label: 'OWASP Top 10', value: 'owasp_top10', count: scans.filter((s) => s.profile === 'owasp_top10').length },
-              { label: 'API Security', value: 'api_security', count: scans.filter((s) => s.profile === 'api_security').length },
-              { label: 'Quick Recon', value: 'quick_recon', count: scans.filter((s) => s.profile === 'quick_recon').length },
-            ],
-          },
-          {
-            id: 'findings',
-            label: 'Outcome',
-            selectedValues: findingFilters,
-            onChange: (val) => {
-              setFindingFilters(Array.isArray(val) ? val : [val])
-              setCurrentPage(1)
-            },
-            options: [
-              { label: 'All Outcomes', value: 'all', count: scans.length },
-              { label: 'Has Critical', value: 'has_critical', count: criticalFindingsCount },
-              { label: 'Has High', value: 'has_high', count: highFindingsCount },
-              { label: 'Clean Scans', value: 'clean', count: cleanScansCount },
-            ],
-          },
-        ]}
+        filters={
+          hideFilterBar
+            ? undefined
+            : [
+                {
+                  id: 'status',
+                  label: 'Status',
+                  selectedValues: statusFilters,
+                  onChange: (val) => {
+                    const selected = Array.isArray(val) ? val : [val]
+                    setStatusFilters(selected)
+                    const nextParams = new URLSearchParams(searchParams)
+                    const lastPicked = selected.find((v) => v !== 'all')
+                    if (lastPicked && !selected.includes('all') && selected.length === 1) {
+                      nextParams.set('status', lastPicked)
+                    } else {
+                      nextParams.delete('status')
+                    }
+                    setSearchParams(nextParams)
+                    setCurrentPage(1)
+                  },
+                  options: [
+                    { label: 'All Statuses', value: 'all', count: scans.length },
+                    { label: 'Running', value: 'running', count: runningCount },
+                    { label: 'Queued', value: 'queued', count: queuedCount },
+                    { label: 'Completed', value: 'completed', count: completedScans.length },
+                    { label: 'Failed', value: 'failed', count: failedCount },
+                    { label: 'Cancelled', value: 'cancelled', count: scans.filter((s) => s.status === 'cancelled').length },
+                  ],
+                },
+                {
+                  id: 'target',
+                  label: 'Target',
+                  selectedValues: targetFilters,
+                  onChange: (val) => {
+                    const selected = Array.isArray(val) ? val : [val]
+                    setTargetFilters(selected)
+                    const nextParams = new URLSearchParams(searchParams)
+                    const lastPicked = selected.find((v) => v !== 'all')
+                    if (lastPicked && !selected.includes('all')) {
+                      nextParams.set('targetId', lastPicked)
+                    } else {
+                      nextParams.delete('targetId')
+                    }
+                    setSearchParams(nextParams)
+                    setCurrentPage(1)
+                  },
+                  options: targetFilterOptions,
+                },
+                {
+                  id: 'profile',
+                  label: 'Profile',
+                  selectedValues: profileFilters,
+                  onChange: (val) => {
+                    setProfileFilters(Array.isArray(val) ? val : [val])
+                    setCurrentPage(1)
+                  },
+                  options: [
+                    { label: 'All Profiles', value: 'all', count: scans.length },
+                    { label: 'OWASP Top 10', value: 'owasp_top10', count: scans.filter((s) => s.profile === 'owasp_top10').length },
+                    { label: 'API Security', value: 'api_security', count: scans.filter((s) => s.profile === 'api_security').length },
+                    { label: 'Quick Recon', value: 'quick_recon', count: scans.filter((s) => s.profile === 'quick_recon').length },
+                  ],
+                },
+                {
+                  id: 'findings',
+                  label: 'Outcome',
+                  selectedValues: findingFilters,
+                  onChange: (val) => {
+                    setFindingFilters(Array.isArray(val) ? val : [val])
+                    setCurrentPage(1)
+                  },
+                  options: [
+                    { label: 'All Outcomes', value: 'all', count: scans.length },
+                    { label: 'Has Critical', value: 'has_critical', count: criticalFindingsCount },
+                    { label: 'Has High', value: 'has_high', count: highFindingsCount },
+                    { label: 'Clean Scans', value: 'clean', count: cleanScansCount },
+                  ],
+                },
+              ]
+        }
         emptyTitle="No scans found"
         emptyDescription="No scan executions match your selected status, target, or search criteria."
         emptyAction={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setSearchQuery('')
-              setStatusFilters(['all'])
-              setTargetFilters(['all'])
-              setProfileFilters(['all'])
-              setFindingFilters(['all'])
-              setSearchParams({})
-              setCurrentPage(1)
-            }}
-          >
-            Clear filters
-          </Button>
+          hideFilterBar ? undefined : (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('')
+                setStatusFilters(['all'])
+                setTargetFilters(['all'])
+                setProfileFilters(['all'])
+                setFindingFilters(['all'])
+                setSearchParams({})
+                setCurrentPage(1)
+              }}
+            >
+              Clear filters
+            </Button>
+          )
         }
-        onResetFilters={() => {
-          setSearchQuery('')
-          setStatusFilters(['all'])
-          setTargetFilters(['all'])
-          setProfileFilters(['all'])
-          setFindingFilters(['all'])
-          setSearchParams({})
-          setCurrentPage(1)
-        }}
-        pagination={{
-          currentPage,
-          pageSize: 10,
-          totalItems: filteredScans.length,
-          onPageChange: handlePageChange,
-        }}
+        onResetFilters={
+          hideFilterBar
+            ? undefined
+            : () => {
+                setSearchQuery('')
+                setStatusFilters(['all'])
+                setTargetFilters(['all'])
+                setProfileFilters(['all'])
+                setFindingFilters(['all'])
+                setSearchParams({})
+                setCurrentPage(1)
+              }
+        }
+        pagination={
+          hidePagination
+            ? undefined
+            : {
+                currentPage,
+                pageSize: 10,
+                totalItems: filteredScans.length,
+                onPageChange: handlePageChange,
+              }
+        }
       />
 
       {/* Slide-over Inspection Drawer (Triggered by ID link, Actions Inspect, or URL ?scanId=...) */}

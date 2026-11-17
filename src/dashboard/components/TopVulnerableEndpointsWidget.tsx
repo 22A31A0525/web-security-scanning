@@ -1,13 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Activity } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import type { Finding } from '../../types/schema'
-import TimelineFilterPopover, {
-  DEFAULT_TIMELINE_FILTER,
-  TimelineFilter,
-  isDateInTimeline,
-} from './TimelineFilterPopover'
+import { isDateInTimeline } from './TimelineFilterPopover'
 
 export interface EndpointItem {
   endpoint: string
@@ -29,9 +25,7 @@ export default function TopVulnerableEndpointsWidget() {
   const navigate = useNavigate()
   const findings = useAppStore((state) => state.findings)
   const targets = useAppStore((state) => state.targets)
-
-  // Timeline Filter State (matching AuthScopeChart, ResolutionChart, OWASP Top 10)
-  const [timeline, setTimeline] = useState<TimelineFilter>(DEFAULT_TIMELINE_FILTER)
+  const timeline = useAppStore((state) => state.dashboardTimeline)
 
   // Map targets by ID for fast lookup
   const targetMap = useMemo(() => {
@@ -116,7 +110,6 @@ export default function TopVulnerableEndpointsWidget() {
             ({endpointList.length} routes)
           </span>
         </div>
-        <TimelineFilterPopover value={timeline} onChange={setTimeline} />
       </div>
 
       {/* Main body: Flush edge-to-edge dividing borders without inner cards or lateral spacing padding (Exact LiveScans Architecture) */}

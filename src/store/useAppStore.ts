@@ -31,6 +31,11 @@ import {
   mockSeverityTrends,
   defaultScannerSettings,
 } from '../data/mockData'
+import {
+  DEFAULT_TIMELINE_FILTER,
+  TimelineFilter,
+  isDateInTimeline,
+} from '../dashboard/components/TimelineFilterPopover'
 
 export interface AppState {
   targets: Target[]
@@ -39,12 +44,16 @@ export interface AppState {
   reports: Report[]
   settings: ScannerSettings
   sidebarCollapsed: boolean
+  dashboardTimeline: TimelineFilter
   isLoading: boolean
   error: string | null
 
   // Sidebar Actions
   setSidebarCollapsed: (collapsed: boolean) => void
   toggleSidebarCollapsed: () => void
+
+  // Dashboard Timeline Action
+  setDashboardTimeline: (timeline: TimelineFilter) => void
 
   // Lifecycle
   initialize: () => Promise<void>
@@ -90,6 +99,7 @@ export const useAppStore = create<AppState>((set) => ({
   reports: loadFromStorage(STORAGE_KEYS.reports, mockReports),
   settings: loadFromStorage(STORAGE_KEYS.settings, defaultScannerSettings),
   sidebarCollapsed: loadFromStorage(STORAGE_KEYS.sidebar, false),
+  dashboardTimeline: loadFromStorage<TimelineFilter>(STORAGE_KEYS.timeline, DEFAULT_TIMELINE_FILTER),
   isLoading: false,
   error: null,
 
@@ -103,6 +113,10 @@ export const useAppStore = create<AppState>((set) => ({
       saveToStorage(STORAGE_KEYS.sidebar, next)
       return { sidebarCollapsed: next }
     })
+  },
+  setDashboardTimeline: (timeline) => {
+    saveToStorage(STORAGE_KEYS.timeline, timeline)
+    set({ dashboardTimeline: timeline })
   },
 
   initialize: async () => {
@@ -678,46 +692,49 @@ export function useLiveTasks(): LiveTaskItem[] {
  * Returns dynamic executive dashboard telemetry and chart distributions
  */
 export function useDashboardAnalytics(
-  timelineOrOptions: DashboardTimeline | DashboardTimelineOptions = '30D'
+  timelineOrOptions?: DashboardTimeline | DashboardTimelineOptions | TimelineFilter
 ) {
-  const timeline: DashboardTimeline =
-    typeof timelineOrOptions === 'string'
-      ? timelineOrOptions
-      : timelineOrOptions.trendTimeline || '30D'
+  const storeTimeline = useAppStore((state) => state.dashboardTimeline)
+  const activeTimelineFilter: TimelineFilter =
+    timelineOrOptions && typeof timelineOrOptions === 'object' && 'preset' in timelineOrOptions
+      ? (timelineOrOptions as TimelineFilter)
+      : storeTimeline
 
   const targets = useAppStore((state) => state.targets)
   const scans = useAppStore((state) => state.scans)
   const findings = useAppStore((state) => state.findings)
 
-  const activeFindings = findings.filter(
+  // Filter findings based on active dashboard timeline
+  const timelineFilteredFindings = findings.filter((f) =>
+    isDateInTimeline(f.discoveredAt, activeTimelineFilter)
+  )
+  const effectiveFindings =
+    timelineFilteredFindings.length > 0 ? timelineFilteredFindings : findings
+
+  const activeFindings = effectiveFindings.filter(
     (f) => f.status === 'open' || f.status === 'confirmed'
   )
 
+  // Filter scans based on active dashboard timeline
+  const timelineFilteredScans = scans.filter((s) =>
+    isDateInTimeline(s.startedAt, activeTimelineFilter)
+  )
+  const effectiveScans =
+    timelineFilteredScans.length > 0 ? timelineFilteredScans : scans
+
+  // Filter targets with activity in active dashboard timeline
+  const activeTargetIds = new Set([
+    ...effectiveScans.map((s) => s.targetId),
+    ...effectiveFindings.map((f) => f.targetId),
+  ])
+  const effectiveTargets =
+    activeTargetIds.size > 0
+      ? targets.filter((t) => activeTargetIds.has(t.id))
+      : targets
+
   const refDate = new Date()
 
-  // Calculate timeline threshold for filtering findings
-  const timelineDays =
-    timeline === '30D'
-      ? 30
-      : timeline === '90D'
-      ? 90
-      : timeline === '6M'
-      ? 180
-      : Infinity
-
-  const timelineCutoff = Number.isFinite(timelineDays)
-    ? new Date(refDate.getTime() - timelineDays * 24 * 60 * 60 * 1000)
-    : null
-
-  const targetTimelineFindings = timelineCutoff
-    ? activeFindings.filter((f) => new Date(f.discoveredAt) >= timelineCutoff)
-    : activeFindings
-
-  const owaspTimelineFindings = timelineCutoff
-    ? activeFindings.filter((f) => new Date(f.discoveredAt) >= timelineCutoff)
-    : activeFindings
-
-  // 1. Severity Stats
+  // 1. Severity Stats (synchronously driven by active timeline)
   const severityStats: SeverityStats = {
     critical: activeFindings.filter((f) => f.severity === 'critical').length,
     high: activeFindings.filter((f) => f.severity === 'high').length,
@@ -726,9 +743,7 @@ export function useDashboardAnalytics(
   }
 
   // 2. Trend Data
-  const baseTrends =
-    (mockSeverityTrends as Record<string, SeverityTrendPoint[]>)[timeline] ||
-    mockSeverityTrends['30D']
+  const baseTrends = mockSeverityTrends['30D']
   const trendData: SeverityTrendPoint[] = baseTrends.map((point, idx) => {
     if (idx === baseTrends.length - 1) {
       return { ...point, ...severityStats }
@@ -737,17 +752,17 @@ export function useDashboardAnalytics(
   })
 
   // 3. Authentication Scope Distribution (Directly matches targets in AuthScopeChart)
-  const authTargetsCount = targets.filter((t) => t.authenticated).length
-  const unauthTargetsCount = targets.length - authTargetsCount
+  const authTargetsCount = effectiveTargets.filter((t) => t.authenticated).length
+  const unauthTargetsCount = effectiveTargets.length - authTargetsCount
   const authScopeData: AuthScopeSlice[] = [
     { name: 'Authenticated', value: authTargetsCount, color: themeColors.scope.authenticated },
     { name: 'Unauthenticated', value: unauthTargetsCount, color: themeColors.scope.unauthenticated },
   ]
 
   // 4. Target Stacked Findings
-  const targetStackedData: TargetStackedFinding[] = targets
+  const targetStackedData: TargetStackedFinding[] = effectiveTargets
     .map((t) => {
-      const tf = targetTimelineFindings.filter((f) => f.targetId === t.id)
+      const tf = activeFindings.filter((f) => f.targetId === t.id)
       const crit = tf.filter((f) => f.severity === 'critical').length
       const high = tf.filter((f) => f.severity === 'high').length
       const med = tf.filter((f) => f.severity === 'medium').length
@@ -771,7 +786,7 @@ export function useDashboardAnalytics(
 
   // 5. Official OWASP Top 10 Stacked Categories
   const categoryMap = new Map<string, { crit: number; high: number; med: number; low: number }>()
-  owaspTimelineFindings.forEach((f) => {
+  activeFindings.forEach((f) => {
     const key = f.category
     const curr = categoryMap.get(key) || { crit: 0, high: 0, med: 0, low: 0 }
     if (f.severity === 'critical') curr.crit++
@@ -798,9 +813,9 @@ export function useDashboardAnalytics(
     .slice(0, 10)
 
   // 6. Vulnerability Resolution Lifecycle
-  const resolvedCount = findings.filter((f) => f.status === 'resolved').length
-  const openCount = findings.filter((f) => f.status === 'open' || f.status === 'confirmed').length
-  const fpCount = findings.filter((f) => f.status === 'false_positive').length
+  const resolvedCount = effectiveFindings.filter((f) => f.status === 'resolved').length
+  const openCount = effectiveFindings.filter((f) => f.status === 'open' || f.status === 'confirmed').length
+  const fpCount = effectiveFindings.filter((f) => f.status === 'false_positive').length
   const resolutionData: ResolutionStatusSlice[] = [
     { name: 'Resolved / Fixed', value: resolvedCount, color: themeColors.status.green },
     { name: 'Open / Unresolved', value: openCount, color: themeColors.status.red },
@@ -808,11 +823,11 @@ export function useDashboardAnalytics(
   ]
 
   // 7. Live Telemetry metrics
-  const totalCrawledEndpoints = scans.reduce(
+  const totalCrawledEndpoints = effectiveScans.reduce(
     (acc, s) => acc + (s.scannedEndpointsCount || 0),
     0
   )
-  const completedScans = scans.filter((s) => s.status === 'completed' && s.durationSec > 0)
+  const completedScans = effectiveScans.filter((s) => s.status === 'completed' && s.durationSec > 0)
   const avgSeconds =
     completedScans.length > 0
       ? Math.round(completedScans.reduce((acc, s) => acc + s.durationSec, 0) / completedScans.length)
@@ -820,7 +835,7 @@ export function useDashboardAnalytics(
   const avgRuntime = completedScans.length > 0 ? `${Math.round(avgSeconds / 60)}m` : '--'
 
   // 8. KPIs & Security Posture Score
-  const resolvedFindings = findings.filter((f) => f.status === 'resolved')
+  const resolvedFindings = effectiveFindings.filter((f) => f.status === 'resolved')
   const mttrDays =
     resolvedFindings.length > 0
       ? Math.round(
@@ -835,8 +850,8 @@ export function useDashboardAnalytics(
       : 0
 
   const kpis = {
-    totalTargets: targets.length,
-    activeScansCount: scans.filter((s) => s.status === 'running').length,
+    totalTargets: effectiveTargets.length,
+    activeScansCount: effectiveScans.filter((s) => s.status === 'running').length,
     totalOpenFindings: activeFindings.length,
     criticalCount: severityStats.critical,
     mttrDays,
@@ -886,8 +901,8 @@ export function useDashboardAnalytics(
       ? themeColors.status.yellow
       : themeColors.status.red
   const authCoveragePct =
-    targets.length > 0
-      ? Math.round((targets.filter((t) => t.authenticated).length / targets.length) * 100)
+    effectiveTargets.length > 0
+      ? Math.round((effectiveTargets.filter((t) => t.authenticated).length / effectiveTargets.length) * 100)
       : 100
 
   const posture = {
@@ -898,8 +913,8 @@ export function useDashboardAnalytics(
     authCoveragePct,
     openFindingsCount: activeFindings.length,
     urgentCount: severityStats.critical + severityStats.high,
-    totalTargets: targets.length,
-    authenticatedTargetsCount: targets.filter((t) => t.authenticated).length,
+    totalTargets: effectiveTargets.length,
+    authenticatedTargetsCount: effectiveTargets.filter((t) => t.authenticated).length,
   }
 
   // 9. Remediation SLA & MTTR Velocity

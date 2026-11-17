@@ -45,7 +45,7 @@ export default function Sidebar() {
   return (
     <aside
       aria-label="Sidebar navigation"
-      className={`h-full bg-sidebar flex flex-col justify-between shrink-0 select-none border-r-0 transition-[width] duration-300 ease-in-out ${
+      className={`h-full bg-sidebar flex flex-col justify-between shrink-0 select-none border-r border-border transition-[width] duration-300 ease-in-out relative z-10 ${
         collapsed ? 'w-16' : 'w-56 sm:w-60'
       }`}
     >

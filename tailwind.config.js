@@ -54,12 +54,20 @@ export default {
         'icon-md': '1.25rem', // 20px (inputs, settings, actions)
         'icon-lg': '1.5rem',  // 24px (navbar brand, hero)
       },
+      borderRadius: {
+        '3xl': '0.625rem', // 10px (large containers / modals)
+        '2xl': '0.5rem',   // 8px (cards, widgets, tables - reduced from default 16px)
+        'xl': '0.375rem',  // 6px (buttons, inputs, dropdowns, popovers - reduced from default 12px)
+        'lg': '0.25rem',   // 4px (small controls, badges, chips - reduced from default 8px)
+        'md': '0.1875rem', // 3px (micro badges, tags - reduced from default 6px)
+        'sm': '0.125rem',  // 2px
+      },
       colors: {
         // Centralized Profile Palette (Single Source of Truth)
-        canvas: '#01040a',           // Deep dark canvas & viewport background
-        sidebar: '#0d1117',          // Dark sidebar & panel background
-        card: '#0d1117',             // Modal, card & container background
-        surface: '#161b22',          // Elevated surface (active item, sub-button, hover preview)
+        canvas: '#0a0a0a',           // Root canvas & viewport background (#0a0a0a)
+        sidebar: '#121212',          // Distinct dark sidebar surface nearby (#121212)
+        card: '#0a0a0a',             // Modal, card & container background (#0a0a0a)
+        surface: '#18181b',          // Elevated surface (active item, sub-button, hover preview)
 
         border: '#21262d',           // Container & navbar border
         'border-input': 'rgba(48, 54, 61, 0.9)', // Input border

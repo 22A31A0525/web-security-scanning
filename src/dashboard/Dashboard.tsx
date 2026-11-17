@@ -13,18 +13,23 @@ import LiveScans from './components/LiveScans'
 import AuthScopeChart from './components/AuthScopeChart'
 import ResolutionChart from './components/ResolutionChart'
 import SeverityTrendChart from './components/SeverityTrendChart'
+import FindingsOverTimeChart from './components/FindingsOverTimeChart'
 import OwaspTop10Widget from './components/OwaspTop10Widget'
 import TopVulnerableEndpointsWidget from './components/TopVulnerableEndpointsWidget'
+import TimelineFilterPopover from './components/TimelineFilterPopover'
 import Button from '../ui/Button'
 import CreateScanDrawer from '../scans/CreateScanDrawer'
+import { useAppStore } from '../store/useAppStore'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const [isCreateScanOpen, setIsCreateScanOpen] = useState(false)
+  const dashboardTimeline = useAppStore((state) => state.dashboardTimeline)
+  const setDashboardTimeline = useAppStore((state) => state.setDashboardTimeline)
 
   return (
     <>
-      {/* Section Header with Run Scan Primary Action */}
+      {/* Section Header with Global Timeline Selector and Run Scan Primary Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-h1 text-heading">
@@ -34,17 +39,24 @@ export default function Dashboard() {
             Real-time DAST vulnerability metrics and scan coverage across web targets
           </p>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          aria-label="Run scan"
-          onClick={() => setIsCreateScanOpen(true)}
-          className="shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
-          <span>Run scan</span>
-        </Button>
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          {/* Centralized Global Timeline Filter controlling all dashboard charts & widgets */}
+          <TimelineFilterPopover
+            value={dashboardTimeline}
+            onChange={setDashboardTimeline}
+          />
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            aria-label="Run scan"
+            onClick={() => setIsCreateScanOpen(true)}
+            className="cursor-pointer"
+          >
+            <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
+            <span>Run scan</span>
+          </Button>
+        </div>
       </div>
 
       {/* Top Row: Clean 6 Cards Grid (ThreatScore + 5 Key Metrics) */}
@@ -61,19 +73,19 @@ export default function Dashboard() {
         <RemediationSlaCard />
       </div>
 
-      {/* Next Row: 3 Canvas Containers */}
+      {/* Middle Analytics Row: Auth Scope + Vulnerability Resolution + Findings Over Time (All 3 in 1 Row) */}
       <div
         role="region"
-        aria-label="Analytics & Scans"
-        className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_1fr] gap-4 w-full"
+        aria-label="Target Authentication, Resolution and Findings Over Time"
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full"
       >
-        <LiveScans />
         <AuthScopeChart />
         <ResolutionChart />
+        <FindingsOverTimeChart />
       </div>
 
-      {/* Next Row: Severity Progression Trend */}
-      <div role="region" aria-label="Severity Progression Trend" className="w-full">
+      {/* Progression Row: Severity Progression Trend */}
+      <div role="region" aria-label="Progression and Burn-down Trends" className="w-full">
         <SeverityTrendChart />
       </div>
 
@@ -85,6 +97,11 @@ export default function Dashboard() {
       >
         <OwaspTop10Widget />
         <TopVulnerableEndpointsWidget />
+      </div>
+
+      {/* Bottom Dedicated Section: Live / Recent Scans Execution Component */}
+      <div role="region" aria-label="Live Scans Activity" className="w-full">
+        <LiveScans />
       </div>
 
       {/* Create / Run Scan Multi-Step Drawer Directly from Dashboard */}

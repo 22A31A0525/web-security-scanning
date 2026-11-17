@@ -4,10 +4,6 @@ import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { ArrowUpRight, Info, X } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import Button from "../../ui/Button";
-import TimelineFilterPopover, {
-  DEFAULT_TIMELINE_FILTER,
-  TimelineFilter,
-} from "./TimelineFilterPopover";
 
 // Pull single-source-of-truth palette directly from tailwind.config.js
 // @ts-ignore
@@ -17,9 +13,6 @@ const colors = tailwindConfig.theme.extend.colors;
 const SCOPE_COLORS = colors.scope;
 
 export default function AuthScopeChart() {
-  const [timeline, setTimeline] = useState<TimelineFilter>(
-    DEFAULT_TIMELINE_FILTER,
-  );
   const [selectedScope, setSelectedScope] = useState<
     "authenticated" | "unauthenticated" | null
   >(null);
@@ -87,14 +80,14 @@ export default function AuthScopeChart() {
       ? authenticatedTargets
       : unauthenticatedTargets;
 
-  const updatePlacement = (scope: "authenticated" | "unauthenticated") => {
+  const updatePlacement = (_scope: "authenticated" | "unauthenticated") => {
     if (typeof window !== "undefined" && window.innerWidth < 640) {
       setPopoverPlacement("bottom");
     } else {
-      // Recharts standard angle order:
-      // Entry 0 (Authenticated, 62.5%): spans bottom/left half -> place popup on LEFT
-      // Entry 1 (Unauthenticated, 37.5%): spans top/right half -> place popup on RIGHT
-      setPopoverPlacement(scope === "authenticated" ? "left" : "right");
+      // In a 2-column dashboard layout, AuthScopeChart is on the left column.
+      // Placing on the right keeps the popup entirely over the dashboard card area
+      // and never collides with or clips against the left sidebar.
+      setPopoverPlacement("right");
     }
   };
 
@@ -126,7 +119,7 @@ export default function AuthScopeChart() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Tightly anchored directly outside the donut ring (outerRadius is 86px)
+  // Anchored directly outside the donut ring (outerRadius 86px) pointing at the slice
   const getPlacementStyles = () => {
     if (
       popoverPlacement === "bottom" ||
@@ -138,15 +131,15 @@ export default function AuthScopeChart() {
         transform: "translateX(-50%)",
       };
     }
-    if (popoverPlacement === "right") {
+    if (popoverPlacement === "left") {
       return {
-        left: "calc(50% + 92px)",
+        right: "calc(50% + 92px)",
         top: "50%",
         transform: "translateY(-50%)",
       };
     }
     return {
-      right: "calc(50% + 92px)",
+      left: "calc(50% + 92px)",
       top: "50%",
       transform: "translateY(-50%)",
     };
@@ -156,14 +149,15 @@ export default function AuthScopeChart() {
     <section
       ref={containerRef}
       aria-label="Target Authentication Scope"
-      className="col-span-1 h-[320px] max-h-[320px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between relative"
+      className={`col-span-1 h-[320px] max-h-[320px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between relative transition-all duration-150 ${
+        selectedScope ? "z-50" : "z-10"
+      }`}
     >
-      {/* Top Row: Title and Timeline Selector */}
+      {/* Top Row: Title */}
       <div className="flex items-center justify-between min-h-[32px] gap-2">
         <span className="text-sm font-bold text-heading whitespace-nowrap">
           Authentication Scope
         </span>
-        <TimelineFilterPopover value={timeline} onChange={setTimeline} />
       </div>
 
       {/* Middle: Clean Donut Chart + Anchored Tightly Beside the Ring */}
@@ -238,11 +232,11 @@ export default function AuthScopeChart() {
           )}
         </div>
 
-        {/* Refined Popup Anchored on User Selection (Click) */}
+        {/* Refined Popup Anchored on User Selection (Click) - uses consistent bg-card matching OWASP and Severity Trend */}
         {selectedScope && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute z-50 w-[350px] bg-card border border-border rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-150"
+            className="absolute z-50 w-[340px] bg-card border border-border rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-150"
             style={getPlacementStyles()}
           >
             {/* Directional Arrow Pointer touching the slice */}
@@ -265,7 +259,7 @@ export default function AuthScopeChart() {
               />
             )}
 
-            {/* Inner Card Container: Solid bg-card (#0d1117) */}
+            {/* Inner Card Container */}
             <div className="w-full bg-card rounded-xl overflow-hidden flex flex-col z-20">
               {/* Header: Transparent background matching card container */}
               <div className="px-3 py-2 min-h-[38px] flex items-center justify-between bg-transparent border-b border-border text-xs gap-2">

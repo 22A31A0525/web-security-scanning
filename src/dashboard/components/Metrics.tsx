@@ -1,12 +1,33 @@
 import { useDashboardAnalytics, useAppStore } from '../../store/useAppStore'
+import { isDateInTimeline } from './TimelineFilterPopover'
 
 export function TotalTargetsCard() {
   const targets = useAppStore((state) => state.targets)
-  const prodTargetsCount = targets.filter((t) => t.environment === 'production').length
-  const stagingTargetsCount = targets.filter((t) => t.environment === 'staging').length
-  const devTargetsCount = targets.filter((t) => t.environment === 'dev').length
-  const unauthCount = targets.filter((t) => !t.authenticated).length
-  const unauthPct = targets.length > 0 ? Math.round((unauthCount / targets.length) * 100) : 0
+  const findings = useAppStore((state) => state.findings)
+  const scans = useAppStore((state) => state.scans)
+  const timeline = useAppStore((state) => state.dashboardTimeline)
+
+  // Filter targets based on timeline activity
+  const timelineFilteredFindings = findings.filter((f) =>
+    isDateInTimeline(f.discoveredAt, timeline)
+  )
+  const timelineFilteredScans = scans.filter((s) =>
+    isDateInTimeline(s.startedAt, timeline)
+  )
+  const activeTargetIds = new Set([
+    ...timelineFilteredScans.map((s) => s.targetId),
+    ...timelineFilteredFindings.map((f) => f.targetId),
+  ])
+  const effectiveTargets =
+    activeTargetIds.size > 0
+      ? targets.filter((t) => activeTargetIds.has(t.id))
+      : targets
+
+  const prodTargetsCount = effectiveTargets.filter((t) => t.environment === 'production').length
+  const stagingTargetsCount = effectiveTargets.filter((t) => t.environment === 'staging').length
+  const devTargetsCount = effectiveTargets.filter((t) => t.environment === 'dev').length
+  const unauthCount = effectiveTargets.filter((t) => !t.authenticated).length
+  const unauthPct = effectiveTargets.length > 0 ? Math.round((unauthCount / effectiveTargets.length) * 100) : 0
 
   return (
     <section
@@ -21,7 +42,7 @@ export function TotalTargetsCard() {
 
       <div className="flex items-center justify-between py-1">
         <span className="text-3xl sm:text-4xl font-bold tracking-tight text-heading">
-          {targets.length}
+          {effectiveTargets.length}
         </span>
         <div className="flex flex-col items-start gap-0.5 text-xs">
           <span className="text-desc font-medium">
@@ -51,12 +72,20 @@ export function TotalTargetsCard() {
 
 export function TotalScansCard() {
   const scans = useAppStore((state) => state.scans)
-  const completedScansCount = scans.filter((s) => s.status === 'completed').length
-  const failedScansCount = scans.filter((s) => s.status === 'failed').length
-  const runningScansCount = scans.filter(
+  const timeline = useAppStore((state) => state.dashboardTimeline)
+
+  const timelineFilteredScans = scans.filter((s) =>
+    isDateInTimeline(s.startedAt, timeline)
+  )
+  const effectiveScans =
+    timelineFilteredScans.length > 0 ? timelineFilteredScans : scans
+
+  const completedScansCount = effectiveScans.filter((s) => s.status === 'completed').length
+  const failedScansCount = effectiveScans.filter((s) => s.status === 'failed').length
+  const runningScansCount = effectiveScans.filter(
     (s) => s.status === 'running' || s.status === 'queued'
   ).length
-  const successRatePct = scans.length > 0 ? Math.round((completedScansCount / scans.length) * 100) : 0
+  const successRatePct = effectiveScans.length > 0 ? Math.round((completedScansCount / effectiveScans.length) * 100) : 0
 
   return (
     <section
@@ -71,7 +100,7 @@ export function TotalScansCard() {
 
       <div className="flex items-center justify-between py-1">
         <span className="text-3xl sm:text-4xl font-bold tracking-tight text-heading">
-          {scans.length}
+          {effectiveScans.length}
         </span>
         <div className="flex flex-col items-start gap-0.5 text-xs">
           <span className="text-desc font-medium">
@@ -98,10 +127,17 @@ export function TotalScansCard() {
 
 export function OpenFindingsCard() {
   const findings = useAppStore((state) => state.findings)
+  const timeline = useAppStore((state) => state.dashboardTimeline)
   const { kpis, severityStats } = useDashboardAnalytics()
 
-  const resolvedCount = findings.filter((f) => f.status === 'resolved').length
-  const totalFindings = findings.length
+  const timelineFilteredFindings = findings.filter((f) =>
+    isDateInTimeline(f.discoveredAt, timeline)
+  )
+  const effectiveFindings =
+    timelineFilteredFindings.length > 0 ? timelineFilteredFindings : findings
+
+  const resolvedCount = effectiveFindings.filter((f) => f.status === 'resolved').length
+  const totalFindings = effectiveFindings.length
   const resolvedPct = totalFindings > 0 ? Math.round((resolvedCount / totalFindings) * 100) : 0
 
   return (

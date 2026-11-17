@@ -12,11 +12,7 @@ import {
 import { Activity, X, Info } from 'lucide-react'
 import { useDashboardAnalytics, useAppStore } from '../../store/useAppStore'
 import type { SeverityTrendPoint, Finding } from '../../types/schema'
-import TimelineFilterPopover, {
-  DEFAULT_TIMELINE_FILTER,
-  TimelineFilter,
-  isDateInTimeline,
-} from './TimelineFilterPopover'
+import { isDateInTimeline } from './TimelineFilterPopover'
 // @ts-ignore
 import tailwindConfig from '../../../tailwind.config.js'
 
@@ -189,7 +185,7 @@ function ScanReportTooltip({
 }
 
 export default function SeverityTrendChart() {
-  const [timeline, setTimeline] = useState<TimelineFilter>(DEFAULT_TIMELINE_FILTER)
+  const timeline = useAppStore((state) => state.dashboardTimeline)
   const findings = useAppStore((state) => state.findings)
   const { severityStats: liveStats } = useDashboardAnalytics()
 
@@ -302,6 +298,47 @@ export default function SeverityTrendChart() {
       })
     }
 
+    if (timeline.preset === 'today') {
+      const intervals = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00']
+      return intervals.map((time, idx) => {
+        const hour = idx * 4
+        const cumulativeFindings = activeTimelineFindings.filter((f) => {
+          const dateObj = new Date(f.discoveredAt)
+          return dateObj.getUTCHours() <= hour
+        })
+        return {
+          date: time,
+          critical: cumulativeFindings.filter((f) => f.severity === 'critical').length,
+          high: cumulativeFindings.filter((f) => f.severity === 'high').length,
+          medium: cumulativeFindings.filter((f) => f.severity === 'medium').length,
+          low: cumulativeFindings.filter((f) => f.severity === 'low').length,
+        }
+      })
+    }
+
+    if (timeline.preset === '7D') {
+      return calculatePoints([
+        { label: 'Nov 08', iso: '2026-11-08' },
+        { label: 'Nov 09', iso: '2026-11-09' },
+        { label: 'Nov 10', iso: '2026-11-10' },
+        { label: 'Nov 11', iso: '2026-11-11' },
+        { label: 'Nov 12', iso: '2026-11-12' },
+        { label: 'Nov 13', iso: '2026-11-13' },
+        { label: 'Nov 14', iso: '2026-11-14' },
+      ])
+    }
+
+    if (timeline.preset === '30D') {
+      return calculatePoints([
+        { label: 'Oct 15', iso: '2026-10-15' },
+        { label: 'Oct 22', iso: '2026-10-22' },
+        { label: 'Oct 29', iso: '2026-10-29' },
+        { label: 'Nov 05', iso: '2026-11-05' },
+        { label: 'Nov 12', iso: '2026-11-12' },
+        { label: 'Nov 14', iso: '2026-11-14' },
+      ])
+    }
+
     if (timeline.preset === '3M') {
       return calculatePoints([
         { label: 'Sep 01', iso: '2026-09-01' },
@@ -344,7 +381,7 @@ export default function SeverityTrendChart() {
   return (
     <section
       aria-label="Severity Progression Trend"
-      className="w-full bg-card border border-border rounded-2xl p-4 sm:p-5 flex flex-col justify-between"
+      className="w-full bg-card border border-border rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative z-10"
     >
       {/* Style to kill any browser SVG focus outline / clutter borders */}
       <style>{`
@@ -359,7 +396,7 @@ export default function SeverityTrendChart() {
         }
       `}</style>
 
-      {/* Top Header Row with Dynamic Subtitle and Timeline Selector */}
+      {/* Top Header Row with Dynamic Subtitle (Synchronized to Global Dashboard Timeline) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-sm font-bold text-heading whitespace-nowrap">
@@ -369,7 +406,6 @@ export default function SeverityTrendChart() {
             Individual trajectory curves across severity tiers ({timeline.label})
           </p>
         </div>
-        <TimelineFilterPopover value={timeline} onChange={setTimeline} />
       </div>
 
       {/* Chart Area or Clean Zero-Data Empty State */}
@@ -471,7 +507,7 @@ export default function SeverityTrendChart() {
                   name="Medium"
                   stroke={colors.status.yellow}
                   strokeWidth={2}
-                  fill="url(#trendGradientMedium)"
+                  fill="none"
                   activeDot={{
                     r: 5,
                     stroke: colors.canvas,
@@ -499,7 +535,7 @@ export default function SeverityTrendChart() {
                   name="High"
                   stroke={colors.status.orange}
                   strokeWidth={2}
-                  fill="url(#trendGradientHigh)"
+                  fill="none"
                   activeDot={{
                     r: 5,
                     stroke: colors.canvas,
@@ -527,7 +563,7 @@ export default function SeverityTrendChart() {
                   name="Critical"
                   stroke={colors.status.red}
                   strokeWidth={2}
-                  fill="url(#trendGradientCritical)"
+                  fill="none"
                   activeDot={{
                     r: 5,
                     stroke: colors.canvas,
@@ -555,7 +591,7 @@ export default function SeverityTrendChart() {
                   name="Low"
                   stroke={colors.status.blue}
                   strokeWidth={2}
-                  fill="url(#trendGradientLow)"
+                  fill="none"
                   activeDot={{
                     r: 5,
                     stroke: colors.canvas,
@@ -605,7 +641,7 @@ export default function SeverityTrendChart() {
 
               return (
                 <div
-                  className="absolute z-30 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute z-50 animate-in fade-in zoom-in-95 duration-150"
                   style={{
                     left,
                     top,

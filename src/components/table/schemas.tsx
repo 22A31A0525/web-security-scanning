@@ -1,6 +1,7 @@
 import type { DataTableColumn } from "./types";
 import type { Target, Scan, Finding, Report } from "../../types/schema";
 import { Lock, Unlock } from "lucide-react";
+import ScanStatusBadge from "../../scans/components/ScanStatusBadge";
 
 /**
  * 1. Web & API Targets Column Schema
@@ -145,31 +146,14 @@ export const scanTableColumns: DataTableColumn<Scan>[] = [
   {
     id: "status",
     header: "Status",
-    width: "110px",
+    width: "120px",
     sortable: true,
-    cell: (scan) => {
-      let dot = "bg-status-green";
-      let label = "Completed";
-      if (scan.status === "running") {
-        dot = "bg-status-blue";
-        label = scan.progress > 50 ? "Auditing" : "Crawling";
-      } else if (scan.status === "queued") {
-        dot = "bg-status-yellow";
-        label = "Queued";
-      } else if (scan.status === "failed") {
-        dot = "bg-status-red";
-        label = "Failed";
-      }
-      return (
-        <div className="flex items-center gap-1.5 text-xs text-desc">
-          <span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}
-            aria-hidden="true"
-          />
-          <span>{label}</span>
-        </div>
-      );
-    },
+    cell: (scan) => (
+      <ScanStatusBadge
+        status={scan.status}
+        progress={scan.progress}
+      />
+    ),
   },
   {
     id: "progress",

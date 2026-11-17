@@ -14,11 +14,7 @@ import {
 import { useAppStore } from '../../store/useAppStore'
 import Button from '../../ui/Button'
 import type { Finding } from '../../types/schema'
-import TimelineFilterPopover, {
-  DEFAULT_TIMELINE_FILTER,
-  TimelineFilter,
-  isDateInTimeline,
-} from './TimelineFilterPopover'
+import { isDateInTimeline } from './TimelineFilterPopover'
 
 type SeverityTier = 'critical' | 'high' | 'medium' | 'low'
 
@@ -70,9 +66,7 @@ export default function OwaspTop10Widget() {
   const navigate = useNavigate()
   const findings = useAppStore((state) => state.findings)
   const targets = useAppStore((state) => state.targets)
-
-  // Timeline Filter State (matching AuthScopeChart, ResolutionChart, SeverityTrendChart)
-  const [timeline, setTimeline] = useState<TimelineFilter>(DEFAULT_TIMELINE_FILTER)
+  const timeline = useAppStore((state) => state.dashboardTimeline)
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [activeSeverity, setActiveSeverity] = useState<SeverityTier>('critical')
@@ -202,9 +196,9 @@ export default function OwaspTop10Widget() {
     <section
       ref={containerRef}
       aria-label="OWASP Top 10 Categories"
-      className="col-span-1 bg-card border border-border rounded-2xl p-4 flex flex-col justify-between relative"
+      className="col-span-1 bg-card border border-border rounded-2xl p-4 flex flex-col justify-between relative z-10"
     >
-      {/* Top Header Row with Dynamic Subtitle and Timeline Selector (Matching Severity Trend) */}
+      {/* Top Header Row with Dynamic Subtitle (Synchronized to Global Dashboard Timeline) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
         <div className="flex flex-col gap-0.5">
           <h2 className="text-sm font-bold text-heading whitespace-nowrap">
@@ -214,13 +208,12 @@ export default function OwaspTop10Widget() {
             Vulnerability distribution across OWASP categories ({timeline.label})
           </p>
         </div>
-        <TimelineFilterPopover value={timeline} onChange={setTimeline} />
       </div>
 
       {/* Chart Area or Clean Zero-Data Empty State matching SeverityTrendChart */}
       <div ref={chartWrapperRef} className="relative w-full h-64 sm:h-72 my-1">
         {chartData.length === 0 ? (
-          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 rounded-xl bg-surface/20 border border-border/50">
+          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 rounded-xl  border border-border/50">
             <Activity className="size-8 text-desc/40 mb-2" aria-hidden="true" />
             <p className="text-sm font-semibold text-heading">
               No vulnerability data recorded on {timeline.label}
@@ -453,7 +446,7 @@ export default function OwaspTop10Widget() {
       </div>
 
       {/* Bottom Row: Exact matching structure with SeverityTrendChart (Severity counts + Right Info Hint) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 border-t border-border mt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2.5 mt-1">
         <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-desc whitespace-nowrap">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-red" aria-hidden="true" />

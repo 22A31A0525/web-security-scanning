@@ -85,10 +85,10 @@ export default function TargetDetailDrawer({
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <aside
           aria-label="Target Detail Drawer"
-          className="w-screen max-w-lg h-full bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+          className="w-screen max-w-lg h-full bg-sidebar border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
         >
           {/* Top Drawer Header */}
-          <div className="p-6 border-b border-border bg-card shrink-0">
+          <div className="p-6 border-b border-border bg-sidebar shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {/* Target Name */}

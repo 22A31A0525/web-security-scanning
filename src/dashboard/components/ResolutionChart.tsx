@@ -5,10 +5,7 @@ import { ArrowUpRight, Info, X } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import Button from "../../ui/Button";
 import type { Finding } from "../../types/schema";
-import TimelineFilterPopover, {
-  DEFAULT_TIMELINE_FILTER,
-  TimelineFilter,
-} from "./TimelineFilterPopover";
+import { isDateInTimeline } from "./TimelineFilterPopover";
 
 // Pull centralized palette directly from tailwind.config.js
 // @ts-ignore
@@ -64,9 +61,6 @@ const SCOPE_CONFIG: Record<ResolutionScope, ScopeConfig> = {
 };
 
 export default function ResolutionChart() {
-  const [timeline, setTimeline] = useState<TimelineFilter>(
-    DEFAULT_TIMELINE_FILTER,
-  );
   const [selectedScope, setSelectedScope] = useState<ResolutionScope | null>(
     null,
   );
@@ -78,6 +72,7 @@ export default function ResolutionChart() {
   const navigate = useNavigate();
 
   const findings = useAppStore((state) => state.findings);
+  const timeline = useAppStore((state) => state.dashboardTimeline);
   const targets = useAppStore((state) => state.targets);
   const targetMap = useMemo(
     () => new Map(targets.map((t) => [t.id, t])),
@@ -86,8 +81,9 @@ export default function ResolutionChart() {
 
   // Filter findings based on active timeline (or fallback to all if none in range)
   const timelineFindings = useMemo(() => {
-    return findings;
-  }, [findings]);
+    const inRange = findings.filter((f) => isDateInTimeline(f.discoveredAt, timeline));
+    return inRange.length > 0 ? inRange : findings;
+  }, [findings, timeline]);
 
   // Group findings by status cleanly
   const resolvedFindings = useMemo(() => {
@@ -203,7 +199,7 @@ export default function ResolutionChart() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Tightly anchored adjacent to the donut ring (outerRadius 86px)
+  // Anchored directly outside the donut ring (outerRadius 86px) pointing at the slice
   const getPlacementStyles = () => {
     if (
       popoverPlacement === "bottom" ||
@@ -236,14 +232,15 @@ export default function ResolutionChart() {
     <section
       ref={containerRef}
       aria-label="Vulnerability Resolution"
-      className="col-span-1 h-[320px] max-h-[320px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between select-none relative"
+      className={`col-span-1 h-[320px] max-h-[320px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between select-none relative transition-all duration-150 ${
+        selectedScope ? "z-50" : "z-10"
+      }`}
     >
-      {/* Top Row: Title & Timeline Selector */}
+      {/* Top Row: Title */}
       <div className="flex items-center justify-between min-h-[32px] gap-2">
         <span className="text-sm font-bold text-heading whitespace-nowrap">
           Vulnerability Resolution
         </span>
-        <TimelineFilterPopover value={timeline} onChange={setTimeline} />
       </div>
 
       {/* Middle: Clean Donut Chart + Anchored Tightly Beside the Ring */}
@@ -328,11 +325,11 @@ export default function ResolutionChart() {
           )}
         </div>
 
-        {/* Refined Interactive Popover Anchored on User Click */}
+        {/* Refined Interactive Popover Anchored on User Click - uses consistent bg-card matching OWASP and Severity Trend */}
         {selectedScope && currentConfig && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute z-50 w-[350px] bg-card border border-border rounded-xl shadow-2xl flex flex-col select-none animate-in fade-in zoom-in-95 duration-150"
+            className="absolute z-50 w-[340px] bg-card border border-border rounded-xl shadow-2xl flex flex-col select-none animate-in fade-in zoom-in-95 duration-150"
             style={getPlacementStyles()}
           >
             {/* Directional Arrow Pointer touching the slice */}
@@ -355,7 +352,7 @@ export default function ResolutionChart() {
               />
             )}
 
-            {/* Inner Card Container: Solid bg-card (#0d1117) */}
+            {/* Inner Card Container */}
             <div className="w-full bg-card rounded-xl overflow-hidden flex flex-col z-20">
               {/* Header: Transparent background matching card container */}
               <div className="px-3 py-2 min-h-[38px] flex items-center justify-between bg-transparent border-b border-border text-xs gap-2">

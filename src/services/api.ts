@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   reports: 'webscanner_reports',
   settings: 'webscanner_settings',
   sidebar: 'webscanner_sidebar_collapsed',
+  timeline: 'webscanner_dashboard_timeline',
 } as const
 
 export function loadFromStorage<T>(key: string, fallback: T): T {

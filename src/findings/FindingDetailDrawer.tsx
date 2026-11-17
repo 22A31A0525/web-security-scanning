@@ -96,10 +96,10 @@ export default function FindingDetailDrawer({
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <aside
           aria-label="Finding Detail Drawer"
-          className="w-screen max-w-lg h-full bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+          className="w-screen max-w-lg h-full bg-sidebar border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
         >
           {/* Top Drawer Header */}
-          <div className="p-6 border-b border-border bg-card shrink-0">
+          <div className="p-6 border-b border-border bg-sidebar shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {/* Vulnerability Title */}
@@ -320,7 +320,7 @@ export default function FindingDetailDrawer({
                     className={`px-3 py-1.5 text-xs font-mono font-medium transition-colors cursor-pointer ${
                       activeEvidenceTab === 'request'
                         ? 'bg-surface text-heading font-semibold'
-                        : 'bg-card text-desc hover:text-heading hover:bg-surface/50'
+                        : 'bg-sidebar text-desc hover:text-heading hover:bg-surface/50'
                     }`}
                   >
                     Request
@@ -331,7 +331,7 @@ export default function FindingDetailDrawer({
                     className={`px-3 py-1.5 text-xs font-mono font-medium transition-colors cursor-pointer ${
                       activeEvidenceTab === 'response'
                         ? 'bg-surface text-heading font-semibold'
-                        : 'bg-card text-desc hover:text-heading hover:bg-surface/50'
+                        : 'bg-sidebar text-desc hover:text-heading hover:bg-surface/50'
                     }`}
                   >
                     Response

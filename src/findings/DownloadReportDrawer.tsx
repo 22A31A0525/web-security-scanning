@@ -431,10 +431,10 @@ export default function DownloadReportDrawer({
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <aside
           aria-label="Download Security Report Drawer"
-          className="w-screen max-w-2xl h-full bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+          className="w-screen max-w-2xl h-full bg-sidebar border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
         >
           {/* Header */}
-          <div className="p-6 border-b border-border bg-card shrink-0">
+          <div className="p-6 border-b border-border bg-sidebar shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-heading">
@@ -479,8 +479,8 @@ export default function DownloadReportDrawer({
 
           {/* Table Container */}
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2">
-            <div className="border border-border rounded-xl overflow-hidden bg-card">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="border border-border rounded-xl overflow-hidden bg-sidebar">
+              <table className="w-full text-left border-collapse text-xs bg-sidebar">
                 {/* Clean, Non-Cluttered Table Header */}
                 <thead>
                   <tr className="border-b border-border bg-surface/50 text-desc text-xs font-medium">
@@ -666,7 +666,7 @@ export default function DownloadReportDrawer({
           </div>
 
           {/* Actions Bar */}
-          <div className="p-6 border-t border-border bg-card shrink-0 flex items-center justify-between gap-4">
+          <div className="p-6 border-t border-border bg-sidebar shrink-0 flex items-center justify-between gap-4">
             <span className="text-xs text-desc font-mono">
               {selectedFindingIds.length} of {MAX_SELECTIONS} selected for PDF compilation
             </span>

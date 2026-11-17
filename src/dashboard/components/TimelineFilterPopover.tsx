@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Calendar, ChevronDown } from 'lucide-react'
 import Button from '../../ui/Button'
 
-export type TimelinePreset = '3M' | '6M' | '12M' | 'custom'
+export type TimelinePreset = 'today' | '7D' | '30D' | '3M' | '6M' | '12M' | 'custom'
 
 export interface TimelineFilter {
   preset: TimelinePreset
@@ -14,8 +14,9 @@ export interface TimelineFilter {
 }
 
 export const DEFAULT_TIMELINE_FILTER: TimelineFilter = {
-  preset: '3M',
-  label: '3 Months',
+  preset: 'today',
+  label: 'Today',
+  singleDate: '2026-11-14',
 }
 
 interface TimelineFilterPopoverProps {
@@ -35,6 +36,12 @@ export function isDateInTimeline(
   const itemDate = new Date(isoDateStr)
   if (isNaN(itemDate.getTime())) return false
 
+  if (filter.preset === 'today') {
+    const todayStr = filter.singleDate || '2026-11-14'
+    const itemIso = itemDate.toISOString().slice(0, 10)
+    return itemIso === todayStr
+  }
+
   if (filter.preset === 'custom') {
     if (filter.mode === 'single' && filter.singleDate) {
       const targetStr = filter.singleDate // YYYY-MM-DD
@@ -51,7 +58,16 @@ export function isDateInTimeline(
 
   // Preset durations based on reference date (now)
   const now = refDate.getTime()
-  const days = filter.preset === '3M' ? 90 : filter.preset === '6M' ? 180 : 365
+  const days =
+    filter.preset === '7D'
+      ? 7
+      : filter.preset === '30D'
+      ? 30
+      : filter.preset === '3M'
+      ? 90
+      : filter.preset === '6M'
+      ? 180
+      : 365
   const threshold = now - days * 24 * 60 * 60 * 1000
   return itemDate.getTime() >= threshold && itemDate.getTime() <= now
 }
@@ -80,15 +96,20 @@ export default function TimelineFilterPopover({
     }
   }, [isOpen])
 
-  const handleSelectPreset = (preset: '3M' | '6M' | '12M') => {
-    const labels: Record<string, string> = {
+  const handleSelectPreset = (preset: TimelinePreset) => {
+    const labels: Record<TimelinePreset, string> = {
+      today: 'Today',
+      '7D': 'Last 7 Days',
+      '30D': 'Last 30 Days',
       '3M': '3 Months',
       '6M': '6 Months',
       '12M': '12 Months',
+      custom: 'Custom',
     }
     onChange({
       preset,
       label: labels[preset],
+      ...(preset === 'today' ? { singleDate: '2026-11-14' } : {}),
     })
     setIsOpen(false)
   }
@@ -119,15 +140,15 @@ export default function TimelineFilterPopover({
       <Button
         type="button"
         variant="secondary"
-        size="sm"
+        size="md"
         aria-label="Filter timeline"
         aria-haspopup="true"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
-        className="px-2.5 py-1 text-xs border border-border shadow-sm flex items-center gap-1.5"
+        className="px-3.5 py-2 text-xs border border-border shadow-xs flex items-center gap-2 cursor-pointer font-medium"
       >
         <Calendar className="size-icon-xs text-desc shrink-0" aria-hidden="true" />
-        <span className="font-medium text-heading whitespace-nowrap">{value.label}</span>
+        <span className="font-semibold text-heading whitespace-nowrap">{value.label}</span>
         <ChevronDown className="size-icon-xs text-desc shrink-0" aria-hidden="true" />
       </Button>
 
@@ -144,9 +165,12 @@ export default function TimelineFilterPopover({
               Preset Timeline
             </span>
             <div className="grid grid-cols-3 gap-1.5">
-              {(['3M', '6M', '12M'] as const).map((p) => {
+              {(['today', '7D', '30D', '3M', '6M', '12M'] as const).map((p) => {
                 const isSelected = value.preset === p
                 const labels: Record<string, string> = {
+                  today: 'Today',
+                  '7D': '7 Days',
+                  '30D': '30 Days',
                   '3M': '3 Mos',
                   '6M': '6 Mos',
                   '12M': '12 Mos',

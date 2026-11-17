@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { X, ExternalLink, Clock, ArrowUpRight, RotateCcw } from "lucide-react";
 import type { EnrichedScan } from "../types/schema";
+import ScanStatusBadge from "./components/ScanStatusBadge";
 
 interface ScanDetailDrawerProps {
   scan: EnrichedScan | null;
@@ -70,10 +71,10 @@ export default function ScanDetailDrawer({
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <aside
           aria-label="Scan Execution Profile Drawer"
-          className="w-screen max-w-lg h-full bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+          className="w-screen max-w-lg h-full bg-sidebar border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
         >
           {/* Top Drawer Header */}
-          <div className="p-6 border-b border-border bg-card shrink-0">
+          <div className="p-6 border-b border-border bg-sidebar shrink-0">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 {/* Target Name as high-contrast prominent title */}
@@ -101,21 +102,11 @@ export default function ScanDetailDrawer({
                       <ArrowUpRight className="size-icon-xs shrink-0" />
                     </button>
                   </span>
-                  <span
-                    className={`font-semibold text-xs ${
-                      isCompleted
-                        ? "text-status-green"
-                        : isRunning
-                          ? "text-status-blue"
-                          : isFailed
-                            ? "text-status-red"
-                            : "text-caption"
-                    }`}
-                  >
-                    {scan?.status
-                      ? scan.status.charAt(0).toUpperCase() + scan.status.slice(1)
-                      : ""}
-                  </span>
+                  <ScanStatusBadge
+                    status={scan.status}
+                    phase={scan.phase}
+                    progress={scan.progress}
+                  />
                 </div>
 
                 {/* Target URL prominent link */}
