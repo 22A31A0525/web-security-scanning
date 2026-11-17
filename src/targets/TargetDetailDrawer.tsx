@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   X,
@@ -71,7 +72,7 @@ export default function TargetDetailDrawer({
       })
     : 'Never'
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
@@ -340,6 +341,7 @@ export default function TargetDetailDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

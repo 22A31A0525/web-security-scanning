@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { X, ExternalLink, Clock, ArrowUpRight, RotateCcw } from "lucide-react";
 import type { EnrichedScan } from "../types/schema";
@@ -52,7 +53,7 @@ export default function ScanDetailDrawer({
       })
     : "00:00:00";
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
@@ -469,6 +470,7 @@ export default function ScanDetailDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

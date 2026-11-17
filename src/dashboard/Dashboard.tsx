@@ -1,15 +1,25 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import SecurityScore from './components/SecurityScore'
-import Metrics from './components/Metrics'
+import {
+  TotalTargetsCard,
+  TotalScansCard,
+  OpenFindingsCard,
+  ScanRuntimeCard,
+  RemediationSlaCard,
+} from './components/Metrics'
 import LiveScans from './components/LiveScans'
 import AuthScopeChart from './components/AuthScopeChart'
 import ResolutionChart from './components/ResolutionChart'
 import SeverityTrendChart from './components/SeverityTrendChart'
+import OwaspTop10Widget from './components/OwaspTop10Widget'
 import Button from '../ui/Button'
+import CreateScanDrawer from '../scans/CreateScanDrawer'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [isCreateScanOpen, setIsCreateScanOpen] = useState(false)
 
   return (
     <>
@@ -28,7 +38,7 @@ export default function Dashboard() {
           variant="primary"
           size="md"
           aria-label="Run scan"
-          onClick={() => navigate('/scans')}
+          onClick={() => setIsCreateScanOpen(true)}
           className="shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <Play className="size-icon-xs fill-current shrink-0" aria-hidden="true" />
@@ -36,14 +46,18 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Top Row: Clean 4 Cards of equal size */}
+      {/* Top Row: Clean 6 Cards Grid (ThreatScore + 5 Key Metrics) */}
       <div
         role="region"
         aria-label="Metrics Grid"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 w-full lg:w-3/5"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5 w-full"
       >
         <SecurityScore />
-        <Metrics />
+        <TotalTargetsCard />
+        <TotalScansCard />
+        <OpenFindingsCard />
+        <ScanRuntimeCard />
+        <RemediationSlaCard />
       </div>
 
       {/* Next Row: 3 Canvas Containers */}
@@ -61,6 +75,25 @@ export default function Dashboard() {
       <div role="region" aria-label="Severity Progression Trend" className="w-full">
         <SeverityTrendChart />
       </div>
+
+      {/* Intelligence Row: OWASP Top 10 Categories */}
+      <div
+        role="region"
+        aria-label="Vulnerability Intelligence"
+        className="w-full"
+      >
+        <OwaspTop10Widget />
+      </div>
+
+      {/* Create / Run Scan Multi-Step Drawer Directly from Dashboard */}
+      <CreateScanDrawer
+        isOpen={isCreateScanOpen}
+        onClose={() => setIsCreateScanOpen(false)}
+        onScanLaunched={(scan) => {
+          setIsCreateScanOpen(false)
+          navigate(scan?.id ? `/scans?scanId=${scan.id}` : '/scans')
+        }}
+      />
     </>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
   X,
   FileDown,
@@ -413,7 +414,7 @@ export default function DownloadReportDrawer({
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
@@ -688,6 +689,7 @@ export default function DownloadReportDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

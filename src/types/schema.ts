@@ -29,7 +29,7 @@ export interface Target {
 }
 
 // --- 2. Scan Execution Types ---
-export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed'
+export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
 
 export type ScanProfile = 'owasp_top10' | 'api_security' | 'quick_recon'
 
@@ -151,7 +151,7 @@ export interface TargetWithTelemetry extends Target {
     medium: number
     low: number
   }
-  lastScanStatus: 'Completed' | 'Running' | 'Failed' | 'Queued'
+  lastScanStatus: 'Completed' | 'Running' | 'Failed' | 'Queued' | 'Cancelled'
   lastScanDuration: string
   topVulnerabilities: Array<{
     id: string
@@ -162,7 +162,7 @@ export interface TargetWithTelemetry extends Target {
   }>
   recentScans: Array<{
     id: string
-    status: 'completed' | 'running' | 'failed' | 'queued'
+    status: 'completed' | 'running' | 'failed' | 'queued' | 'cancelled'
     duration: string
     findingsFound: number
     date: string

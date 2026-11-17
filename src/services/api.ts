@@ -1,4 +1,4 @@
-import type { Target, Scan, Finding, Report, FindingStatus, ScanStatus } from '../types/schema'
+import type { Target, Scan, Finding, Report, FindingStatus } from '../types/schema'
 import {
   mockTargets,
   mockScans,
@@ -211,7 +211,7 @@ export const api = {
     const currentScan = dbScans[idx]
     dbScans[idx] = {
       ...currentScan,
-      status: 'failed' as ScanStatus,
+      status: 'cancelled',
       completedAt: currentScan.completedAt || new Date().toISOString(),
     }
     saveToStorage(STORAGE_KEYS.scans, dbScans)

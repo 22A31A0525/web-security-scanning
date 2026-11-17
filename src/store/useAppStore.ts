@@ -125,157 +125,236 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Targets
   setTargets: (targets) => {
-    saveToStorage(STORAGE_KEYS.targets, targets)
-    set({ targets })
+    try {
+      saveToStorage(STORAGE_KEYS.targets, targets)
+      set({ targets, error: null })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to save targets' })
+    }
   },
 
   addTarget: async (targetData) => {
-    const newTarget = await api.createTarget(targetData)
-    set((state) => ({ targets: [newTarget, ...state.targets] }))
-    return newTarget
+    try {
+      const newTarget = await api.createTarget(targetData)
+      set((state) => ({ targets: [newTarget, ...state.targets], error: null }))
+      return newTarget
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create target'
+      set({ error: msg })
+      throw err
+    }
   },
 
   updateTarget: async (id, updates) => {
-    const updated = await api.updateTarget(id, updates)
-    set((state) => ({
-      targets: state.targets.map((t) => (t.id === id ? updated : t)),
-    }))
-    return updated
+    try {
+      const updated = await api.updateTarget(id, updates)
+      set((state) => ({
+        targets: state.targets.map((t) => (t.id === id ? updated : t)),
+        error: null,
+      }))
+      return updated
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update target'
+      set({ error: msg })
+      throw err
+    }
   },
 
   deleteTarget: async (id) => {
-    await api.deleteTarget(id)
-    set((state) => {
-      const nextTargets = state.targets.filter((t) => t.id !== id)
-      const nextScans = state.scans.filter((s) => s.targetId !== id)
-      const nextFindings = state.findings.filter((f) => f.targetId !== id)
-      saveToStorage(STORAGE_KEYS.targets, nextTargets)
-      saveToStorage(STORAGE_KEYS.scans, nextScans)
-      saveToStorage(STORAGE_KEYS.findings, nextFindings)
-      return {
-        targets: nextTargets,
-        scans: nextScans,
-        findings: nextFindings,
-      }
-    })
-    return true
+    try {
+      await api.deleteTarget(id)
+      set((state) => {
+        const nextTargets = state.targets.filter((t) => t.id !== id)
+        const nextScans = state.scans.filter((s) => s.targetId !== id)
+        const nextFindings = state.findings.filter((f) => f.targetId !== id)
+        saveToStorage(STORAGE_KEYS.targets, nextTargets)
+        saveToStorage(STORAGE_KEYS.scans, nextScans)
+        saveToStorage(STORAGE_KEYS.findings, nextFindings)
+        return {
+          targets: nextTargets,
+          scans: nextScans,
+          findings: nextFindings,
+          error: null,
+        }
+      })
+      return true
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete target'
+      set({ error: msg })
+      throw err
+    }
   },
 
   // Scans
   setScans: (scans) => {
-    saveToStorage(STORAGE_KEYS.scans, scans)
-    set({ scans })
+    try {
+      saveToStorage(STORAGE_KEYS.scans, scans)
+      set({ scans, error: null })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to save scans' })
+    }
   },
 
   addScan: async (scanData) => {
-    const newScan = await api.createScan(scanData)
-    set((state) => {
-      const nextScans = [newScan, ...state.scans]
-      const nextTargets = state.targets.map((t) =>
-        t.id === scanData.targetId
-          ? { ...t, lastScannedAt: newScan.startedAt }
-          : t
-      )
-      saveToStorage(STORAGE_KEYS.targets, nextTargets)
-      return {
-        scans: nextScans,
-        targets: nextTargets,
-      }
-    })
-    return newScan
+    try {
+      const newScan = await api.createScan(scanData)
+      set((state) => {
+        const nextScans = [newScan, ...state.scans]
+        const scanTimestamp = newScan.startedAt || new Date().toISOString()
+        const nextTargets = state.targets.map((t) =>
+          t.id === scanData.targetId
+            ? { ...t, lastScannedAt: scanTimestamp }
+            : t
+        )
+        saveToStorage(STORAGE_KEYS.targets, nextTargets)
+        return {
+          scans: nextScans,
+          targets: nextTargets,
+          error: null,
+        }
+      })
+      return newScan
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to start scan'
+      set({ error: msg })
+      throw err
+    }
   },
 
   updateScanProgress: async (id, progress, status) => {
-    const updates: Partial<Scan> = { progress }
-    if (status) updates.status = status
-    if (progress >= 100) {
-      updates.status = 'completed'
-      updates.completedAt = new Date().toISOString()
+    try {
+      const updates: Partial<Scan> = { progress }
+      if (status) updates.status = status
+      if (progress >= 100) {
+        updates.status = 'completed'
+        updates.completedAt = new Date().toISOString()
+      }
+      const updatedScan = await api.updateScan(id, updates)
+      set((state) => {
+        const nextScans = state.scans.map((s) => (s.id === id ? { ...s, ...updatedScan, ...updates } : s))
+        saveToStorage(STORAGE_KEYS.scans, nextScans)
+        return { scans: nextScans, error: null }
+      })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to update scan progress' })
     }
-    const updatedScan = await api.updateScan(id, updates)
-    set((state) => {
-      const nextScans = state.scans.map((s) => (s.id === id ? { ...s, ...updatedScan, ...updates } : s))
-      saveToStorage(STORAGE_KEYS.scans, nextScans)
-      return { scans: nextScans }
-    })
   },
 
   cancelScan: async (id) => {
-    const updated = await api.cancelScan(id)
-    set((state) => {
-      const nextScans = state.scans.map((s) =>
-        s.id === id ? { ...s, ...updated } : s
-      )
-      saveToStorage(STORAGE_KEYS.scans, nextScans)
-      return { scans: nextScans }
-    })
+    try {
+      const updated = await api.cancelScan(id)
+      set((state) => {
+        const nextScans = state.scans.map((s) =>
+          s.id === id ? { ...s, ...updated } : s
+        )
+        saveToStorage(STORAGE_KEYS.scans, nextScans)
+        return { scans: nextScans, error: null }
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to cancel scan'
+      set({ error: msg })
+      throw err
+    }
   },
 
   // Findings
   setFindings: (findings) => {
-    saveToStorage(STORAGE_KEYS.findings, findings)
-    set({ findings })
+    try {
+      saveToStorage(STORAGE_KEYS.findings, findings)
+      set({ findings, error: null })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to save findings' })
+    }
   },
 
   updateFindingStatus: async (id, status) => {
-    const updated = await api.updateFindingStatus(id, status)
-    set((state) => {
-      const newFindings = state.findings.map((f) => (f.id === id ? updated : f))
-      const updatedFinding = newFindings.find((f) => f.id === id)
-      let newTargets = state.targets
-      if (updatedFinding) {
-        const targetFindings = newFindings.filter(
-          (f) =>
-            f.targetId === updatedFinding.targetId &&
-            (f.status === 'open' || f.status === 'confirmed')
-        )
-        newTargets = state.targets.map((t) =>
-          t.id === updatedFinding.targetId
-            ? { ...t, openFindings: targetFindings.length }
-            : t
-        )
-        saveToStorage(STORAGE_KEYS.targets, newTargets)
-      }
-      return { findings: newFindings, targets: newTargets }
-    })
-    return updated
+    try {
+      const updated = await api.updateFindingStatus(id, status)
+      set((state) => {
+        const newFindings = state.findings.map((f) => (f.id === id ? updated : f))
+        const updatedFinding = newFindings.find((f) => f.id === id)
+        let newTargets = state.targets
+        if (updatedFinding) {
+          const targetFindings = newFindings.filter(
+            (f) =>
+              f.targetId === updatedFinding.targetId &&
+              (f.status === 'open' || f.status === 'confirmed')
+          )
+          newTargets = state.targets.map((t) =>
+            t.id === updatedFinding.targetId
+              ? { ...t, openFindings: targetFindings.length }
+              : t
+          )
+          saveToStorage(STORAGE_KEYS.targets, newTargets)
+        }
+        return { findings: newFindings, targets: newTargets, error: null }
+      })
+      return updated
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update finding status'
+      set({ error: msg })
+      throw err
+    }
   },
 
   bulkUpdateFindingStatus: async (ids, status) => {
-    const updatedList = await api.bulkUpdateFindingStatus(ids, status)
-    set((state) => {
-      const updatedMap = new Map(updatedList.map((u) => [u.id, u]))
-      const newFindings = state.findings.map((f) => updatedMap.get(f.id) || f)
-      const newTargets = state.targets.map((t) => {
-        const count = newFindings.filter(
-          (f) => f.targetId === t.id && (f.status === 'open' || f.status === 'confirmed')
-        ).length
-        return { ...t, openFindings: count }
+    try {
+      const updatedList = await api.bulkUpdateFindingStatus(ids, status)
+      set((state) => {
+        const updatedMap = new Map(updatedList.map((u) => [u.id, u]))
+        const newFindings = state.findings.map((f) => updatedMap.get(f.id) || f)
+        const newTargets = state.targets.map((t) => {
+          const count = newFindings.filter(
+            (f) => f.targetId === t.id && (f.status === 'open' || f.status === 'confirmed')
+          ).length
+          return { ...t, openFindings: count }
+        })
+        saveToStorage(STORAGE_KEYS.targets, newTargets)
+        return { findings: newFindings, targets: newTargets, error: null }
       })
-      saveToStorage(STORAGE_KEYS.targets, newTargets)
-      return { findings: newFindings, targets: newTargets }
-    })
-    return updatedList
+      return updatedList
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to bulk update findings'
+      set({ error: msg })
+      throw err
+    }
   },
 
   // Reports
   setReports: (reports) => {
-    saveToStorage(STORAGE_KEYS.reports, reports)
-    set({ reports })
+    try {
+      saveToStorage(STORAGE_KEYS.reports, reports)
+      set({ reports, error: null })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to save reports' })
+    }
   },
 
   addReport: async (reportData) => {
-    const newReport = await api.createReport(reportData)
-    set((state) => ({ reports: [newReport, ...state.reports] }))
-    return newReport
+    try {
+      const newReport = await api.createReport(reportData)
+      set((state) => ({ reports: [newReport, ...state.reports], error: null }))
+      return newReport
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create report'
+      set({ error: msg })
+      throw err
+    }
   },
 
   deleteReport: async (id) => {
-    await api.deleteReport(id)
-    set((state) => ({
-      reports: state.reports.filter((r) => r.id !== id),
-    }))
-    return true
+    try {
+      await api.deleteReport(id)
+      set((state) => ({
+        reports: state.reports.filter((r) => r.id !== id),
+        error: null,
+      }))
+      return true
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete report'
+      set({ error: msg })
+      throw err
+    }
   },
 
   // Settings
@@ -379,10 +458,11 @@ export function useEnrichedTargets(): TargetWithTelemetry[] {
         : 'Low'
 
     const lastScan = targetScans[0]
-    let lastScanStatus: 'Completed' | 'Running' | 'Failed' | 'Queued' = 'Completed'
+    let lastScanStatus: 'Completed' | 'Running' | 'Failed' | 'Queued' | 'Cancelled' = 'Completed'
     if (lastScan) {
       if (lastScan.status === 'running') lastScanStatus = 'Running'
       else if (lastScan.status === 'failed') lastScanStatus = 'Failed'
+      else if (lastScan.status === 'cancelled') lastScanStatus = 'Cancelled'
       else if (lastScan.status === 'queued') lastScanStatus = 'Queued'
     }
 
@@ -402,7 +482,7 @@ export function useEnrichedTargets(): TargetWithTelemetry[] {
 
     const recentScans = targetScans.slice(0, 3).map((s) => ({
       id: s.id,
-      status: s.status as 'completed' | 'running' | 'failed' | 'queued',
+      status: s.status as 'completed' | 'running' | 'failed' | 'queued' | 'cancelled',
       duration: `${Math.round(s.durationSec / 60)}m ${s.durationSec % 60}s`,
       findingsFound:
         s.findingsCount.critical +
@@ -449,6 +529,7 @@ export function useEnrichedScans(): EnrichedScan[] {
     if (s.status === 'running') phase = s.progress > 50 ? 'Auditing' : 'Crawling'
     else if (s.status === 'completed') phase = 'Finalized'
     else if (s.status === 'failed') phase = 'Aborted'
+    else if (s.status === 'cancelled') phase = 'Cancelled'
     else if (s.status === 'queued') phase = 'Queued'
 
     // Compute live findings counts dynamically from findings store
@@ -614,8 +695,27 @@ export function useDashboardAnalytics(
 
   const refDate = new Date()
 
-  const targetTimelineFindings = activeFindings
-  const owaspTimelineFindings = activeFindings
+  // Calculate timeline threshold for filtering findings
+  const timelineDays =
+    timeline === '30D'
+      ? 30
+      : timeline === '90D'
+      ? 90
+      : timeline === '6M'
+      ? 180
+      : Infinity
+
+  const timelineCutoff = Number.isFinite(timelineDays)
+    ? new Date(refDate.getTime() - timelineDays * 24 * 60 * 60 * 1000)
+    : null
+
+  const targetTimelineFindings = timelineCutoff
+    ? activeFindings.filter((f) => new Date(f.discoveredAt) >= timelineCutoff)
+    : activeFindings
+
+  const owaspTimelineFindings = timelineCutoff
+    ? activeFindings.filter((f) => new Date(f.discoveredAt) >= timelineCutoff)
+    : activeFindings
 
   // 1. Severity Stats
   const severityStats: SeverityStats = {
@@ -695,7 +795,7 @@ export function useDashboardAnalytics(
       }
     })
     .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
+    .slice(0, 10)
 
   // 6. Vulnerability Resolution Lifecycle
   const resolvedCount = findings.filter((f) => f.status === 'resolved').length
@@ -812,12 +912,12 @@ export function useDashboardAnalytics(
           (resolvedCritical.reduce((sum, f) => {
             const ageDays =
               (refDate.getTime() - new Date(f.discoveredAt).getTime()) / (1000 * 60 * 60 * 24)
-            return sum + Math.max(1, ageDays)
+            return sum + Math.max(0.1, ageDays)
           }, 0) /
             resolvedCritical.length) *
             10
         ) / 10
-      : 3.4
+      : 0
 
   const highMttrDays =
     resolvedHigh.length > 0
@@ -825,12 +925,12 @@ export function useDashboardAnalytics(
           (resolvedHigh.reduce((sum, f) => {
             const ageDays =
               (refDate.getTime() - new Date(f.discoveredAt).getTime()) / (1000 * 60 * 60 * 24)
-            return sum + Math.max(1, ageDays)
+            return sum + Math.max(0.1, ageDays)
           }, 0) /
             resolvedHigh.length) *
             10
         ) / 10
-      : 8.2
+      : 0
 
   const breachedSlaCount = activeFindings.filter((f) => (f.slaDaysRemaining ?? 1) <= 0).length
   const withinSlaCount = Math.max(0, activeFindings.length - breachedSlaCount)
@@ -846,7 +946,7 @@ export function useDashboardAnalytics(
   const slaAnalytics = {
     criticalMttrDays,
     highMttrDays,
-    overallMttrDays: mttrDays || 5.8,
+    overallMttrDays: mttrDays,
     withinSlaCount,
     breachedSlaCount,
     slaCompliancePct,

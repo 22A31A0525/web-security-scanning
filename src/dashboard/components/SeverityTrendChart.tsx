@@ -44,7 +44,7 @@ const tierConfig: Record<
     label: 'Medium Ones',
     colorClass: 'text-status-yellow',
     dotClass: 'bg-status-yellow',
-    shortLabel: 'Med',
+    shortLabel: 'Medium',
   },
   low: {
     label: 'Low Ones',
@@ -625,49 +625,25 @@ export default function SeverityTrendChart() {
         )}
       </div>
 
-      {/* Bottom Row: Left Severities + Bottom-Right Info Hint */}
+      {/* Bottom Row: Plain Legend + Bottom-Right Info Hint */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-desc whitespace-nowrap">
-          <button
-            type="button"
-            onClick={() => setActiveSeverity('critical')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-              activeSeverity === 'critical' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
-            }`}
-          >
+          <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-red" aria-hidden="true" />
             <span>Critical ({timelineStats.critical})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSeverity('high')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-              activeSeverity === 'high' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
-            }`}
-          >
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-orange" aria-hidden="true" />
             <span>High ({timelineStats.high})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSeverity('medium')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-              activeSeverity === 'medium' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
-            }`}
-          >
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-yellow" aria-hidden="true" />
             <span>Medium ({timelineStats.medium})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSeverity('low')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-              activeSeverity === 'low' ? 'bg-surface text-heading font-semibold' : 'text-desc hover:text-heading'
-            }`}
-          >
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full shrink-0 bg-status-blue" aria-hidden="true" />
             <span>Low ({timelineStats.low})</span>
-          </button>
+          </div>
         </div>
 
         {/* Bottom Right: High-visibility Info Note */}

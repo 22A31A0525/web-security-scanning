@@ -247,6 +247,9 @@ export default function ScansView() {
         } else if (scan.status === 'failed') {
           textColor = 'text-status-red'
           label = 'Failed'
+        } else if (scan.status === 'cancelled') {
+          textColor = 'text-caption'
+          label = 'Cancelled'
         }
         return (
           <span className={`text-xs font-semibold ${textColor}`}>
@@ -427,6 +430,7 @@ export default function ScansView() {
               { label: 'Queued', value: 'queued', count: queuedCount },
               { label: 'Completed', value: 'completed', count: completedScans.length },
               { label: 'Failed', value: 'failed', count: failedCount },
+              { label: 'Cancelled', value: 'cancelled', count: scans.filter((s) => s.status === 'cancelled').length },
             ],
           },
           {

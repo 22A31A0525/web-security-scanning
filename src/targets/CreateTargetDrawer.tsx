@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Globe,
@@ -180,7 +181,7 @@ export default function CreateTargetDrawer({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
@@ -668,6 +669,7 @@ export default function CreateTargetDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

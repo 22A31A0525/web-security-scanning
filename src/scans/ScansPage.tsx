@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import Button from '../ui/Button'
 import ScansView from './ScansView'
@@ -7,7 +7,25 @@ import CreateScanDrawer from './CreateScanDrawer'
 
 export default function ScansPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isCreateScanOpen, setIsCreateScanOpen] = useState(false)
+  const preselectedTargetId = searchParams.get('createForTarget')
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'new' || preselectedTargetId) {
+      setIsCreateScanOpen(true)
+    }
+  }, [searchParams, preselectedTargetId])
+
+  const handleCloseCreateScan = () => {
+    setIsCreateScanOpen(false)
+    if (searchParams.get('action') === 'new' || searchParams.get('createForTarget')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('action')
+      next.delete('createForTarget')
+      setSearchParams(next, { replace: true })
+    }
+  }
 
   return (
     <>
@@ -40,8 +58,10 @@ export default function ScansPage() {
       {/* Create / Launch Scan Multi-Step Drawer */}
       <CreateScanDrawer
         isOpen={isCreateScanOpen}
-        onClose={() => setIsCreateScanOpen(false)}
+        onClose={handleCloseCreateScan}
+        preselectedTargetId={preselectedTargetId}
         onScanLaunched={() => {
+          handleCloseCreateScan()
           navigate('/scans')
         }}
       />

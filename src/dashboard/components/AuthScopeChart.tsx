@@ -361,40 +361,22 @@ export default function AuthScopeChart() {
       {/* Bottom: Clean minimal Legend with config colors & Info Hint */}
       <div className="flex items-center justify-between text-xs pt-1">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => handleSliceClick("authenticated")}
-            className={`flex items-center gap-1.5 cursor-pointer truncate text-left transition-colors py-0.5 rounded ${
-              selectedScope === "authenticated"
-                ? "text-heading font-medium"
-                : "text-desc hover:text-heading"
-            }`}
-            title="Click to view authenticated targets"
-          >
+          <div className="flex items-center gap-1.5 text-desc">
             <span
               className="w-2 h-2 rounded-full bg-scope-authenticated shrink-0"
               style={{ backgroundColor: SCOPE_COLORS.authenticated }}
               aria-hidden="true"
             />
             <span className="truncate">Authenticated ({authCount})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSliceClick("unauthenticated")}
-            className={`flex items-center gap-1.5 cursor-pointer truncate text-left transition-colors py-0.5 rounded ${
-              selectedScope === "unauthenticated"
-                ? "text-heading font-medium"
-                : "text-desc hover:text-heading"
-            }`}
-            title="Click to view unauthenticated targets"
-          >
+          </div>
+          <div className="flex items-center gap-1.5 text-desc">
             <span
               className="w-2 h-2 rounded-full bg-scope-unauthenticated shrink-0"
               style={{ backgroundColor: SCOPE_COLORS.unauthenticated }}
               aria-hidden="true"
             />
             <span className="truncate">Unauthenticated ({unauthCount})</span>
-          </button>
+          </div>
         </div>
 
         {/* Bottom Right: Click Sector to inspect hint (matching graph UX) */}

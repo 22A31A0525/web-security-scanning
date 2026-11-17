@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Globe,
@@ -180,7 +181,7 @@ export default function CreateScanDrawer({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
@@ -614,6 +615,7 @@ export default function CreateScanDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

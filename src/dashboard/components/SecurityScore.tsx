@@ -91,11 +91,16 @@ export default function SecurityScore() {
         </div>
       </div>
 
-      {/* Bottom Row: Posture Status Label & Target Coverage (No horizontal line) */}
+      {/* Bottom Row: Posture Status Label & Target Coverage / Urgent Count */}
       <div className="flex items-center justify-between text-xs text-desc font-normal min-h-[16px] pt-1">
         <span className="truncate">{posture.statusLabel}</span>
-        <span className="font-mono text-caption text-xs shrink-0" title="Authenticated scan coverage across targets">
-          {posture.authCoveragePct}% Coverage
+        <span
+          className={`font-semibold text-xs shrink-0 ${
+            posture.urgentCount > 0 ? 'text-status-red' : 'text-status-green'
+          }`}
+          title="Critical and High findings requiring immediate attention"
+        >
+          {posture.urgentCount} Urgent
         </span>
       </div>
     </section>

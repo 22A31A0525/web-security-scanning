@@ -450,7 +450,6 @@ export default function ResolutionChart() {
         <div className="flex items-center gap-3">
           {(["resolved", "open", "false_positive"] as const).map((scopeKey) => {
             const cfg = SCOPE_CONFIG[scopeKey];
-            const isSelected = selectedScope === scopeKey;
             const count =
               scopeKey === "resolved"
                 ? resolvedCount
@@ -459,16 +458,9 @@ export default function ResolutionChart() {
                   : fpCount;
 
             return (
-              <button
+              <div
                 key={scopeKey}
-                type="button"
-                onClick={() => handleSliceClick(scopeKey)}
-                className={`flex items-center gap-1.5 cursor-pointer truncate text-left transition-colors py-0.5 rounded ${
-                  isSelected
-                    ? "text-heading font-medium"
-                    : "text-desc hover:text-heading"
-                }`}
-                title={`Click to view ${cfg.label} findings`}
+                className="flex items-center gap-1.5 text-desc"
               >
                 <span
                   className={`w-2 h-2 rounded-full ${cfg.dotClass} shrink-0`}
@@ -477,7 +469,7 @@ export default function ResolutionChart() {
                 <span className="truncate">
                   {cfg.label} ({count})
                 </span>
-              </button>
+              </div>
             );
           })}
         </div>

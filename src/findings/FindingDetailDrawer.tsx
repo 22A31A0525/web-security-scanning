@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   X,
@@ -82,7 +83,7 @@ export default function FindingDetailDrawer({
   const isConfirmed = finding.status === 'confirmed'
   const isFalsePositive = finding.status === 'false_positive'
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
@@ -352,6 +353,7 @@ export default function FindingDetailDrawer({
           </div>
         </aside>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

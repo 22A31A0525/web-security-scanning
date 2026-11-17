@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Lock, Unlock, Play, Pencil, Eye, Trash2, ArrowUpRight, Activity } from 'lucide-react'
+import { Lock, Unlock, Play, Pencil, Eye, Trash2, ArrowUpRight, Activity, AlertTriangle, X } from 'lucide-react'
 import { DataTable, TableRowActions } from '../components/table'
 import type { DataTableColumn } from '../components/table/types'
 import { useEnrichedTargets, useAppStore } from '../store/useAppStore'
 import type { TargetWithTelemetry } from '../types/schema'
 import TargetDetailDrawer from './TargetDetailDrawer'
 import CreateTargetDrawer from './CreateTargetDrawer'
+import Button from '../ui/Button'
 
 export default function TargetsView() {
   const navigate = useNavigate()
@@ -27,6 +28,8 @@ export default function TargetsView() {
   }, [targets, targetIdParam])
 
   const [editingTarget, setEditingTarget] = useState<TargetWithTelemetry | null>(null)
+  const [targetToDelete, setTargetToDelete] = useState<TargetWithTelemetry | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleInspectTarget = (target: TargetWithTelemetry) => {
     const nextParams = new URLSearchParams(searchParams)
@@ -337,7 +340,7 @@ export default function TargetsView() {
               label: 'Delete',
               icon: <Trash2 className="size-icon-xs text-status-red" />,
               danger: true,
-              onClick: () => deleteTarget(target.id),
+              onClick: () => setTargetToDelete(target),
             },
           ]}
         />
@@ -477,6 +480,89 @@ export default function TargetsView() {
         targetToEdit={editingTarget}
         onUpdateTarget={updateTarget}
       />
+
+      {/* Confirmation Modal for Delete Target */}
+      {targetToDelete && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+          className="fixed inset-0 z-modal bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div
+            className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-status-red/10 border border-status-red/20 flex items-center justify-center text-status-red shrink-0">
+                  <AlertTriangle className="size-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 id="delete-modal-title" className="text-base font-bold text-heading">
+                    Delete Target
+                  </h3>
+                  <p className="text-xs text-desc mt-0.5">
+                    This action will permanently remove this target and cascade to its scans and findings.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTargetToDelete(null)}
+                className="text-desc hover:text-heading cursor-pointer p-1 rounded-lg hover:bg-surface transition-colors"
+                aria-label="Close dialog"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="bg-surface/50 border border-border rounded-xl p-3 flex flex-col gap-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-desc font-medium">Target Name:</span>
+                <span className="text-heading font-semibold">{targetToDelete.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-desc font-medium">Target URL:</span>
+                <span className="text-heading font-mono">{targetToDelete.url}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-desc font-medium">Associated Findings:</span>
+                <span className="text-status-red font-semibold">{targetToDelete.openFindings} open</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setTargetToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="bg-status-red text-white hover:bg-status-red/90"
+                disabled={isDeleting}
+                onClick={async () => {
+                  try {
+                    setIsDeleting(true)
+                    await deleteTarget(targetToDelete.id)
+                    setTargetToDelete(null)
+                  } finally {
+                    setIsDeleting(false)
+                  }
+                }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Target'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
