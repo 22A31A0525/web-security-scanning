@@ -37,8 +37,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     clearBearerToken()
     try {
       localStorage.removeItem('api_configuration_key')
+      sessionStorage.clear()
     } catch (err) {
-      console.error('Failed to clear API key on logout', err)
+      console.error('Failed to clear session on logout', err)
     }
     useAppStore.getState().logout()
     set({

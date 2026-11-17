@@ -264,7 +264,7 @@ export default function DownloadReportDrawer({
                 : 'DAST Security Scan'
 
         doc.text(
-          `Scan ID: #${finding.scanId}   |   Profile: ${scanProfileTitle}   |   Status: ${(scan?.status || 'COMPLETED').toUpperCase()}`,
+          `Scan ID: ${finding.scanId ? `#${finding.scanId}` : 'N/A'}   |   Profile: ${scanProfileTitle}   |   Status: ${(scan?.status || 'COMPLETED').toUpperCase()}`,
           margin + 2,
           yPos
         )
@@ -488,8 +488,8 @@ export default function DownloadReportDrawer({
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={handleSelectAll}
-                        aria-label="Select top findings"
-                        title="Select top findings (up to 5)"
+                        aria-label="Select up to 5 findings"
+                        title={`Select up to ${MAX_SELECTIONS} findings`}
                         className="size-4 rounded border-border bg-surface text-heading focus:ring-border-focus cursor-pointer"
                       />
                     </th>

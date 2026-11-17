@@ -36,7 +36,7 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Single Row Grid: Overall 4 Cards of equal 1fr size */}
+      {/* Top Row: Clean 4 Cards of equal size */}
       <div
         role="region"
         aria-label="Metrics Grid"

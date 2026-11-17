@@ -171,6 +171,11 @@ export const api = {
       }
       return max
     }, 100)
+
+    // Calculate dynamic endpoints based on profile: owasp_top10 (150-180), api_security (90-120), quick_recon (35-60)
+    const baseCount = data.profile === 'quick_recon' ? 45 : data.profile === 'api_security' ? 95 : 140
+    const dynamicEndpoints = baseCount + Math.floor(Math.random() * 25)
+
     const newScan: Scan = {
       id: `scan_${maxScanNum + 1}`,
       targetId: data.targetId,
@@ -180,7 +185,7 @@ export const api = {
       startedAt: new Date().toISOString(),
       durationSec: 0,
       findingsCount: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
-      scannedEndpointsCount: 120,
+      scannedEndpointsCount: dynamicEndpoints,
       triggeredBy: data.triggeredBy || 'Security Analyst (Manual)',
     }
     dbScans = [newScan, ...dbScans]

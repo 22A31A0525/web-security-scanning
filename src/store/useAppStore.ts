@@ -145,9 +145,19 @@ export const useAppStore = create<AppState>((set) => ({
 
   deleteTarget: async (id) => {
     await api.deleteTarget(id)
-    set((state) => ({
-      targets: state.targets.filter((t) => t.id !== id),
-    }))
+    set((state) => {
+      const nextTargets = state.targets.filter((t) => t.id !== id)
+      const nextScans = state.scans.filter((s) => s.targetId !== id)
+      const nextFindings = state.findings.filter((f) => f.targetId !== id)
+      saveToStorage(STORAGE_KEYS.targets, nextTargets)
+      saveToStorage(STORAGE_KEYS.scans, nextScans)
+      saveToStorage(STORAGE_KEYS.findings, nextFindings)
+      return {
+        targets: nextTargets,
+        scans: nextScans,
+        findings: nextFindings,
+      }
+    })
     return true
   },
 
@@ -184,7 +194,7 @@ export const useAppStore = create<AppState>((set) => ({
     }
     const updatedScan = await api.updateScan(id, updates)
     set((state) => {
-      const nextScans = state.scans.map((s) => (s.id === id ? { ...s, ...updates, ...updatedScan } : s))
+      const nextScans = state.scans.map((s) => (s.id === id ? { ...s, ...updatedScan, ...updates } : s))
       saveToStorage(STORAGE_KEYS.scans, nextScans)
       return { scans: nextScans }
     })

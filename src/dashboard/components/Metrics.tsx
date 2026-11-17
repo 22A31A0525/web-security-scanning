@@ -17,7 +17,7 @@ export default function Metrics() {
       {/* Metric Card 1: Total Scans */}
       <section
         aria-label="Total Scans"
-        className="col-span-1 min-h-[140px] bg-card border border-border rounded-2xl p-3.5 flex flex-col justify-between"
+        className="col-span-1 min-h-[175px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between"
       >
         <div className="flex items-center justify-between min-h-[20px]">
           <span className="text-sm font-bold text-heading whitespace-nowrap">
@@ -39,7 +39,7 @@ export default function Metrics() {
           </div>
         </div>
 
-        <div className="flex items-center text-xs text-desc font-normal min-h-[16px]">
+        <div className="flex items-center text-xs text-desc font-normal min-h-[16px] pt-1">
           <span>{runningScansCount} active</span>
         </div>
       </section>
@@ -47,7 +47,7 @@ export default function Metrics() {
       {/* Metric Card 2: Open Findings */}
       <section
         aria-label="Open Findings"
-        className="col-span-1 min-h-[140px] bg-card border border-border rounded-2xl p-3.5 flex flex-col justify-between"
+        className="col-span-1 min-h-[175px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between"
       >
         <div className="flex items-center justify-between min-h-[20px]">
           <span className="text-sm font-bold text-heading whitespace-nowrap">
@@ -75,7 +75,7 @@ export default function Metrics() {
           </div>
         </div>
 
-        <div className="flex items-center text-xs text-desc font-normal min-h-[16px]">
+        <div className="flex items-center text-xs text-desc font-normal min-h-[16px] pt-1">
           <span>Awaiting remediation</span>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function Metrics() {
       {/* Metric Card 3: Remediation SLA */}
       <section
         aria-label="Remediation SLA"
-        className="col-span-1 min-h-[140px] bg-card border border-border rounded-2xl p-3.5 flex flex-col justify-between"
+        className="col-span-1 min-h-[175px] bg-card border border-border rounded-2xl p-4 flex flex-col justify-between"
       >
         <div className="flex items-center justify-between min-h-[20px]">
           <span className="text-sm font-bold text-heading whitespace-nowrap">
@@ -105,7 +105,9 @@ export default function Metrics() {
           </div>
         </div>
 
-        <div className="flex items-center text-xs text-desc font-normal min-h-[16px]"></div>
+        <div className="flex items-center text-xs text-desc font-normal min-h-[16px] pt-1">
+          <span>Target resolution rate</span>
+        </div>
       </section>
     </>
   );
