@@ -98,6 +98,43 @@ export default function CreateTargetDrawer({
 
   if (!isOpen) return null;
 
+  // Robust Target URL validator
+  const validateTargetUrl = (targetUrl: string): { valid: boolean; error?: string } => {
+    const trimmed = targetUrl.trim();
+    if (!trimmed) {
+      return { valid: false, error: "Target URL is required." };
+    }
+    try {
+      const withProto =
+        trimmed.startsWith("http://") || trimmed.startsWith("https://")
+          ? trimmed
+          : `https://${trimmed}`;
+      const parsed = new URL(withProto);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return {
+          valid: false,
+          error: "Protocol must be http:// or https://",
+        };
+      }
+      if (
+        !parsed.hostname ||
+        parsed.hostname.length < 3 ||
+        (!parsed.hostname.includes(".") && parsed.hostname !== "localhost")
+      ) {
+        return {
+          valid: false,
+          error: "Please enter a valid domain or host (e.g. app.acme.com or localhost).",
+        };
+      }
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        error: "Please enter a valid URL (e.g. https://api.acme.com)",
+      };
+    }
+  };
+
   // Validate step 1 before proceeding to auth
   const handleNextFromGeneral = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -105,20 +142,9 @@ export default function CreateTargetDrawer({
       setValidationError("Target name is required.");
       return;
     }
-    if (!url.trim()) {
-      setValidationError("Target URL is required.");
-      return;
-    }
-    try {
-      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
-      if (!parsed.protocol.startsWith("http")) {
-        setValidationError("Target URL must begin with http:// or https://");
-        return;
-      }
-    } catch {
-      setValidationError(
-        "Please enter a valid URL (e.g. https://api.acme.com)",
-      );
+    const urlCheck = validateTargetUrl(url);
+    if (!urlCheck.valid) {
+      setValidationError(urlCheck.error || "Please enter a valid target URL.");
       return;
     }
     setValidationError(null);
@@ -142,6 +168,13 @@ export default function CreateTargetDrawer({
     setIsSubmitting(true);
     setValidationError(null);
     try {
+      const urlCheck = validateTargetUrl(url);
+      if (!urlCheck.valid) {
+        setValidationError(urlCheck.error || "Please enter a valid target URL.");
+        setIsSubmitting(false);
+        setCurrentStep("general");
+        return;
+      }
       let authConfig: TargetAuthConfig | undefined = undefined;
       if (authenticated) {
         authConfig = {
@@ -297,14 +330,17 @@ export default function CreateTargetDrawer({
               <button
                 type="button"
                 onClick={() => {
-                  if (name.trim() && url.trim()) {
-                    setValidationError(null);
-                    setCurrentStep("auth");
-                  } else {
-                    setValidationError(
-                      "Please complete required Profile fields first.",
-                    );
+                  if (!name.trim()) {
+                    setValidationError("Target name is required.");
+                    return;
                   }
+                  const urlCheck = validateTargetUrl(url);
+                  if (!urlCheck.valid) {
+                    setValidationError(urlCheck.error || "Please enter a valid target URL.");
+                    return;
+                  }
+                  setValidationError(null);
+                  setCurrentStep("auth");
                 }}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-medium transition-colors cursor-pointer outline-none select-none ${
                   currentStep === "auth"
@@ -333,18 +369,23 @@ export default function CreateTargetDrawer({
               <button
                 type="button"
                 onClick={() => {
-                  if (name.trim() && url.trim() && isAuthFilled) {
-                    setValidationError(null);
-                    setCurrentStep("review");
-                  } else if (!name.trim() || !url.trim()) {
-                    setValidationError(
-                      "Please complete required Profile fields first.",
-                    );
-                  } else {
+                  if (!name.trim()) {
+                    setValidationError("Target name is required.");
+                    return;
+                  }
+                  const urlCheck = validateTargetUrl(url);
+                  if (!urlCheck.valid) {
+                    setValidationError(urlCheck.error || "Please enter a valid target URL.");
+                    return;
+                  }
+                  if (!isAuthFilled) {
                     setValidationError(
                       "Please complete required Authorization fields first.",
                     );
+                    return;
                   }
+                  setValidationError(null);
+                  setCurrentStep("review");
                 }}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-medium transition-colors cursor-pointer outline-none select-none ${
                   currentStep === "review"

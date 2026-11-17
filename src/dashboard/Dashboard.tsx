@@ -14,6 +14,7 @@ import AuthScopeChart from './components/AuthScopeChart'
 import ResolutionChart from './components/ResolutionChart'
 import SeverityTrendChart from './components/SeverityTrendChart'
 import OwaspTop10Widget from './components/OwaspTop10Widget'
+import TopVulnerableEndpointsWidget from './components/TopVulnerableEndpointsWidget'
 import Button from '../ui/Button'
 import CreateScanDrawer from '../scans/CreateScanDrawer'
 
@@ -76,13 +77,14 @@ export default function Dashboard() {
         <SeverityTrendChart />
       </div>
 
-      {/* Intelligence Row: OWASP Top 10 Categories */}
+      {/* Intelligence Row: OWASP Top 10 (50%) + Top Vulnerable Endpoints (50%) */}
       <div
         role="region"
         aria-label="Vulnerability Intelligence"
-        className="w-full"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full"
       >
         <OwaspTop10Widget />
+        <TopVulnerableEndpointsWidget />
       </div>
 
       {/* Create / Run Scan Multi-Step Drawer Directly from Dashboard */}

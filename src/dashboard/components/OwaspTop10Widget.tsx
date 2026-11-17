@@ -326,7 +326,7 @@ export default function OwaspTop10Widget() {
               stackId="owasp"
               fill="#3b82f6"
               name="Low"
-              radius={[4, 4, 0, 0]}
+              radius={[0, 0, 0, 0]}
               maxBarSize={30}
             >
               {chartData.map((entry, index) => (

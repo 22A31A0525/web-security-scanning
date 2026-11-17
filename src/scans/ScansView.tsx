@@ -6,6 +6,7 @@ import type { DataTableColumn } from '../components/table/types'
 import { useAppStore, useEnrichedScans } from '../store/useAppStore'
 import type { EnrichedScan } from '../types/schema'
 import ScanDetailDrawer from './ScanDetailDrawer'
+import Button from '../ui/Button'
 
 export default function ScansView() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function ScansView() {
   const scanIdParam = searchParams.get('scanId')
   const targetIdParam = searchParams.get('targetId')
   const statusParam = searchParams.get('status')
+  const pageParam = searchParams.get('page')
 
   const scans = useEnrichedScans()
   const targets = useAppStore((state) => state.targets)
@@ -64,7 +66,29 @@ export default function ScansView() {
   }, [targetIdParam])
   const [profileFilters, setProfileFilters] = useState<string[]>(['all'])
   const [findingFilters, setFindingFilters] = useState<string[]>(['all'])
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(() => {
+    const parsed = Number(pageParam)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+  })
+
+  // Sync page state when URL back/forward navigation changes ?page=
+  useEffect(() => {
+    const parsed = Number(pageParam)
+    const validPage = Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+    setCurrentPage((prev) => (prev !== validPage ? validPage : prev))
+  }, [pageParam])
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    const nextParams = new URLSearchParams(searchParams)
+    if (newPage > 1) {
+      nextParams.set('page', String(newPage))
+    } else {
+      nextParams.delete('page')
+    }
+    setSearchParams(nextParams)
+  }
+
   const pageSize = 10
   const [sortField, setSortField] = useState<string | null>('startedAt')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -483,6 +507,25 @@ export default function ScansView() {
             ],
           },
         ]}
+        emptyTitle="No scans found"
+        emptyDescription="No scan executions match your selected status, target, or search criteria."
+        emptyAction={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSearchQuery('')
+              setStatusFilters(['all'])
+              setTargetFilters(['all'])
+              setProfileFilters(['all'])
+              setFindingFilters(['all'])
+              setSearchParams({})
+              setCurrentPage(1)
+            }}
+          >
+            Clear filters
+          </Button>
+        }
         onResetFilters={() => {
           setSearchQuery('')
           setStatusFilters(['all'])
@@ -490,12 +533,13 @@ export default function ScansView() {
           setProfileFilters(['all'])
           setFindingFilters(['all'])
           setSearchParams({})
+          setCurrentPage(1)
         }}
         pagination={{
           currentPage,
           pageSize: 10,
           totalItems: filteredScans.length,
-          onPageChange: setCurrentPage,
+          onPageChange: handlePageChange,
         }}
       />
 

@@ -315,7 +315,7 @@ export const mockFindings: Finding[] = [
     category: 'A03: Injection',
     cwe: 'CWE-89',
     status: 'confirmed',
-    location: 'GET /api/v2/orders?filter_id=',
+    location: 'GET /api/v2/orders',
     description: 'Single quote causes syntax error exposing table schemas in the database error response.',
     evidence: {
       request: 'GET /api/v2/orders?filter_id=102\'%20OR%201=1-- HTTP/1.1\nHost: pay.acme.com\nAuthorization: Bearer mock_token_a1f9',
@@ -374,7 +374,7 @@ export const mockFindings: Finding[] = [
     category: 'A03: Injection',
     cwe: 'CWE-79',
     status: 'confirmed',
-    location: 'GET /inventory/search?err=',
+    location: 'GET /erp/download',
     description: 'Query string value is echoed directly inside the error banner script tags.',
     evidence: {
       request: 'GET /inventory/search?err=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1\nHost: erp.staging.acme.internal',
@@ -394,7 +394,7 @@ export const mockFindings: Finding[] = [
     category: 'A03: Injection',
     cwe: 'CWE-943',
     status: 'open',
-    location: 'POST /api/v2/ledger/query',
+    location: 'POST /api/v2/transactions/search',
     description: 'MongoDB $gt operator injected via JSON payload bypasses transaction authorization filter.',
     evidence: {
       request: 'POST /api/v2/ledger/query HTTP/1.1\nHost: pay.acme.com\nContent-Type: application/json\n\n{"account_id": {"$gt": ""}}',
@@ -456,7 +456,7 @@ export const mockFindings: Finding[] = [
     category: 'A01: Broken Access Control',
     cwe: 'CWE-22',
     status: 'open',
-    location: 'GET /erp/download?template=',
+    location: 'GET /erp/download',
     description: 'Relative dot-dot-slash sequence allows reading /etc/passwd from web server.',
     evidence: {
       request: 'GET /erp/download?template=../../../../../../etc/passwd HTTP/1.1\nHost: erp.staging.acme.internal',
@@ -557,7 +557,7 @@ export const mockFindings: Finding[] = [
     category: 'A07: Identification and Authentication Failures',
     cwe: 'CWE-613',
     status: 'open',
-    location: 'POST /api/v2/auth/logout',
+    location: 'POST /api/v2/tokens',
     description: 'Bearer token remains valid on server and accepts API requests after client logout.',
     evidence: {
       request: 'GET /api/v2/transactions HTTP/1.1\nHost: pay.acme.com\nAuthorization: Bearer previously_revoked_token',
@@ -579,7 +579,7 @@ export const mockFindings: Finding[] = [
     category: 'A02: Cryptographic Failures',
     cwe: 'CWE-319',
     status: 'open',
-    location: 'POST /api/v2/checkout/debug-log',
+    location: 'POST /api/v2/transactions/search',
     description: 'Cardholder Primary Account Numbers (PAN) and CVV logged unencrypted across HTTP transport.',
     evidence: {
       request: 'POST /api/v2/checkout/debug-log HTTP/1.1\nHost: pay.acme.com\n\n{"pan": "4111-2222-3333-4444", "cvv": "912", "exp": "12/28"}',
@@ -782,7 +782,7 @@ export const mockFindings: Finding[] = [
     category: 'A04: Insecure Design',
     cwe: 'CWE-362',
     status: 'open',
-    location: 'POST /checkout/apply-coupon',
+    location: 'POST /api/catalog/image-resize',
     description: 'Concurrent requests allow single-use discount coupon to be redeemed 14 times on single invoice.',
     evidence: {
       request: 'POST /checkout/apply-coupon HTTP/1.1 (20 parallel requests sent within 10ms)\nHost: shop.acme.com\n\n{"coupon": "WELCOME100"}',
@@ -964,7 +964,7 @@ export const mockFindings: Finding[] = [
     category: 'A02: Cryptographic Failures',
     cwe: 'CWE-327',
     status: 'confirmed',
-    location: 'POST /api/v2/tokens/decrypt',
+    location: 'POST /api/v2/tokens',
     description: 'Server returns distinguishable 500 error when PKCS#7 padding is invalid, allowing plaintext decryption.',
     evidence: {
       request: 'POST /api/v2/tokens/decrypt HTTP/1.1\n\n{"cipher": "k8H1927...modified"}',
@@ -1024,7 +1024,7 @@ export const mockFindings: Finding[] = [
     category: 'A05: Security Misconfiguration',
     cwe: 'CWE-1021',
     status: 'open',
-    location: 'GET /api/v2/checkout/confirm',
+    location: 'GET /api/v2/orders',
     description: 'X-Frame-Options: DENY header is missing on payment confirmation screen.',
     evidence: {
       request: 'GET /api/v2/checkout/confirm HTTP/1.1',

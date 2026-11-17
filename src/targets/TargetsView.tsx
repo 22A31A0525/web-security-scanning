@@ -14,6 +14,7 @@ export default function TargetsView() {
   const [searchParams, setSearchParams] = useSearchParams()
   const targetIdParam = searchParams.get('targetId')
   const authParam = searchParams.get('auth')
+  const pageParam = searchParams.get('page')
   const targets = useEnrichedTargets()
   const deleteTarget = useAppStore((state) => state.deleteTarget)
   const addScan = useAppStore((state) => state.addScan)
@@ -57,8 +58,30 @@ export default function TargetsView() {
       setAuthFilters(['all'])
     }
   }, [authParam])
+
   const [riskFilters, setRiskFilters] = useState<string[]>(['all'])
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(() => {
+    const parsed = Number(pageParam)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+  })
+
+  // Sync page state when URL back/forward navigation changes ?page=
+  useEffect(() => {
+    const parsed = Number(pageParam)
+    const validPage = Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+    setCurrentPage((prev) => (prev !== validPage ? validPage : prev))
+  }, [pageParam])
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    const nextParams = new URLSearchParams(searchParams)
+    if (newPage > 1) {
+      nextParams.set('page', String(newPage))
+    } else {
+      nextParams.delete('page')
+    }
+    setSearchParams(nextParams)
+  }
   const pageSize = 10
   const [sortField, setSortField] = useState<string | null>('openFindings')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -428,22 +451,39 @@ export default function TargetsView() {
             ],
           },
         ]}
+        emptyTitle="No targets found"
+        emptyDescription="No targets match the current search or filters."
+        emptyAction={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSearchQuery('')
+              setEnvironmentFilters(['all'])
+              setAuthFilters(['all'])
+              setRiskFilters(['all'])
+              const nextParams = new URLSearchParams()
+              setSearchParams(nextParams)
+              setCurrentPage(1)
+            }}
+          >
+            Clear filters
+          </Button>
+        }
         onResetFilters={() => {
           setSearchQuery('')
           setEnvironmentFilters(['all'])
           setAuthFilters(['all'])
           setRiskFilters(['all'])
-          if (targetIdParam) {
-            const nextParams = new URLSearchParams(searchParams)
-            nextParams.delete('targetId')
-            setSearchParams(nextParams)
-          }
+          const nextParams = new URLSearchParams()
+          setSearchParams(nextParams)
+          setCurrentPage(1)
         }}
         pagination={{
           currentPage,
           pageSize: 10,
           totalItems: filteredTargets.length,
-          onPageChange: setCurrentPage,
+          onPageChange: handlePageChange,
         }}
       />
 
