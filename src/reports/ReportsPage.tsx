@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 import Button from '../ui/Button'
 import ReportsView from './ReportsView'
 import DownloadReportDrawer from '../findings/DownloadReportDrawer'

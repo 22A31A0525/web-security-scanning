@@ -2,15 +2,10 @@ import { useEffect, useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import {
   X,
-  FileDown,
   Download,
-  Calendar,
-  Layers,
   Activity,
   Maximize2,
   Minimize2,
-  ExternalLink,
-  ShieldCheck,
 } from 'lucide-react'
 import Button from '../ui/Button'
 import type { EnrichedReport } from '../types/schema'
@@ -46,12 +41,6 @@ export default function ReportDetailDrawer({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
-
-  // Get associated scan and findings for this report
-  const associatedScan = useMemo(() => {
-    if (!report) return null
-    return scans.find((s) => s.id === report.scanId) || null
-  }, [report, scans])
 
   const associatedFindings = useMemo(() => {
     if (!report) return []
@@ -156,7 +145,7 @@ export default function ReportDetailDrawer({
         yPos += 4
 
         doc.text(
-          `Endpoint: ${finding.location || 'N/A'}   |   Target: ${target?.name || finding.targetName || report.target} (#${finding.targetId})`,
+          `Endpoint: ${finding.location || 'N/A'}   |   Target: ${target?.name || report.target} (#${finding.targetId})`,
           margin + 2,
           yPos
         )

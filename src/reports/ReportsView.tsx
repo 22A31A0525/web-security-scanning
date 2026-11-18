@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Download, FileText, Trash2, ArrowUpRight } from 'lucide-react'
+import { Download, Trash2, ArrowUpRight } from 'lucide-react'
 import { DataTable, TableRowActions } from '../components/table'
 import type { DataTableColumn } from '../components/table/types'
 import { useEnrichedReports, useAppStore } from '../store/useAppStore'
