@@ -11,7 +11,7 @@ export default function FindingsPage() {
 
   return (
     <>
-      {/* Section Header with Download Report Action */}
+      {/* Section Header with Generate Report Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-h1 text-heading">
@@ -25,12 +25,12 @@ export default function FindingsPage() {
           type="button"
           variant="primary"
           size="md"
-          aria-label="Download report"
+          aria-label="Generate report"
           onClick={() => setIsDownloadDrawerOpen(true)}
           className="shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <Download className="size-icon-xs shrink-0" aria-hidden="true" />
-          <span>Download report</span>
+          <span>Generate report</span>
         </Button>
       </div>
 

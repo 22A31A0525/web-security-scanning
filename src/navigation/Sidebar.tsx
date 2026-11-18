@@ -5,6 +5,7 @@ import {
   Target,
   Activity,
   ShieldAlert,
+  FileText,
   Key,
   ArrowLeft,
   PanelLeftClose,
@@ -18,6 +19,7 @@ export default function Sidebar() {
   const targets = useAppStore((state) => state.targets)
   const scans = useAppStore((state) => state.scans)
   const findings = useAppStore((state) => state.findings)
+  const reports = useAppStore((state) => state.reports)
 
   const isSettings = location.pathname === '/settings'
 
@@ -34,6 +36,7 @@ export default function Sidebar() {
     { label: 'Targets', path: '/targets', icon: Target, count: targets.length },
     { label: 'Scans', path: '/scans', icon: Activity, count: scans.length },
     { label: 'Findings', path: '/findings', icon: ShieldAlert, count: findings.length },
+    { label: 'Reports', path: '/reports', icon: FileText, count: reports.length },
   ]
 
   const settingsNavItems: NavItem[] = [

@@ -304,6 +304,7 @@ export const api = {
       framework: data.framework || 'OWASP Top 10 Audit',
       createdAt: new Date().toISOString(),
       findings: data.findings ?? 0,
+      findingIds: data.findingIds || [],
       format: data.format || 'pdf',
       fileSizeKb: data.fileSizeKb || 1100,
       downloadUrl: '#',

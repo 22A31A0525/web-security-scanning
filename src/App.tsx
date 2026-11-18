@@ -5,6 +5,7 @@ import Dashboard from './dashboard/Dashboard'
 import TargetsPage from './targets/TargetsPage'
 import ScansPage from './scans/ScansPage'
 import FindingsPage from './findings/FindingsPage'
+import ReportsPage from './reports/ReportsPage'
 import ApiSettingsView from './settings/ApiSettingsView'
 import NotFound from './notFound/NotFound'
 import { useAuthStore } from './store/useAuthStore'
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/targets" element={<TargetsPage />} />
           <Route path="/scans" element={<ScansPage />} />
           <Route path="/findings" element={<FindingsPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<ApiSettingsView />} />
         </Route>
 

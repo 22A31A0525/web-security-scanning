@@ -28,6 +28,7 @@ export default function DownloadReportDrawer({
 }: DownloadReportDrawerProps) {
   const scans = useAppStore((state) => state.scans)
   const targets = useAppStore((state) => state.targets)
+  const addReport = useAppStore((state) => state.addReport)
 
   // Local state
   const [selectedFindingIds, setSelectedFindingIds] = useState<string[]>([])
@@ -406,6 +407,25 @@ export default function DownloadReportDrawer({
 
       const fileName = `Security_Audit_Report_${new Date().toISOString().slice(0, 10)}.pdf`
       doc.save(fileName)
+
+      // Persist newly generated report to local storage and store
+      const primaryFinding = selectedFindings[0]
+      const primaryTarget = targets.find((t) => t.id === primaryFinding?.targetId)
+      const targetName = primaryTarget?.name || primaryFinding?.targetName || 'Monitored Assets'
+      const scanId = primaryFinding?.scanId || 'scan_118'
+
+      await addReport({
+        title: `${targetName} — Security Evaluation`,
+        framework: 'OWASP Top 10 Audit',
+        scanId,
+        target: targetName,
+        findings: selectedFindings.length,
+        findingIds: selectedFindingIds,
+        format: 'pdf',
+        fileSizeKb: Math.max(1, Math.round(doc.output('blob').size / 1024)),
+      })
+
+      setSelectedFindingIds([])
       onClose()
     } catch (err) {
       console.error('Failed to export PDF report:', err)
@@ -430,7 +450,7 @@ export default function DownloadReportDrawer({
       {/* Slide-over Drawer Panel (Expanded width for comfortable table reading) */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <aside
-          aria-label="Download Security Report Drawer"
+          aria-label="Generate Security Report Drawer"
           className="w-screen max-w-2xl h-full bg-sidebar border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
         >
           {/* Header */}
@@ -438,7 +458,7 @@ export default function DownloadReportDrawer({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-heading">
-                  Download Security Report
+                  Generate Security Report
                 </h2>
                 <p className="text-xs text-desc mt-1">
                   Select up to 5 findings to compile into a comprehensive PDF inspection audit report.
@@ -683,7 +703,7 @@ export default function DownloadReportDrawer({
               <span>
                 {isGenerating
                   ? 'Compiling PDF...'
-                  : `Download PDF (${selectedFindingIds.length})`}
+                  : `Generate report (${selectedFindingIds.length})`}
               </span>
             </Button>
           </div>

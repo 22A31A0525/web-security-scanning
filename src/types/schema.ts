@@ -106,6 +106,7 @@ export interface Report {
   framework?: string
   createdAt: string
   findings: number
+  findingIds?: string[]
   format: ReportFormat
   fileSizeKb?: number
   downloadUrl?: string

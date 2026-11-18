@@ -10,6 +10,7 @@ export interface DataTableColumn<T> {
   width?: string
   minWidth?: string
   align?: 'left' | 'center' | 'right'
+  headerAlign?: 'left' | 'center' | 'right'
   className?: string
   cell?: (item: T, index: number) => React.ReactNode
 }

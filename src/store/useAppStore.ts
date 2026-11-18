@@ -600,6 +600,7 @@ export function useEnrichedReports(): EnrichedReport[] {
       ...r,
       title: r.title || fallbackMock?.title || `${r.target} — Security Evaluation`,
       framework: r.framework || fallbackMock?.framework || 'OWASP Top 10 Audit',
+      findingIds: r.findingIds || fallbackMock?.findingIds || [],
     }
   })
 }
