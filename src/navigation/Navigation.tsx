@@ -67,7 +67,7 @@ export default function Navigation() {
         {/* Left: Clickable Logo and Website Name routing to /dashboard */}
         <Link
           to="/dashboard"
-          aria-label="Web-security-scanning Dashboard"
+          aria-label="Web Security Scanner Dashboard"
           className="flex items-center gap-3 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-canvas rounded-lg shrink-0"
         >
           <img
@@ -76,7 +76,7 @@ export default function Navigation() {
             className="size-icon-lg object-contain rounded shrink-0"
           />
           <span className="text-h3 text-heading">
-            Web-security-scanning
+            Web Security Scanner
           </span>
         </Link>
 
