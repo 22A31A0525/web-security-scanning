@@ -8,6 +8,7 @@ import {
   FileText,
   Key,
   ArrowLeft,
+  Settings,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -136,8 +137,30 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom Collapse / Expand Button with top border attached to sidebar */}
-      <div className="p-3 border-t border-border">
+      {/* Bottom Actions: Settings link & Collapse / Expand Button */}
+      <div className="p-3 border-t border-border space-y-1">
+        {/* Settings Navigation Link */}
+        <Link
+          to="/settings"
+          title={collapsed ? 'Settings' : undefined}
+          aria-label="Settings"
+          aria-current={isSettings ? 'page' : undefined}
+          className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar select-none ${
+            collapsed ? 'justify-center' : ''
+          } ${
+            isSettings
+              ? 'bg-surface text-heading font-semibold'
+              : 'text-desc hover:text-heading hover:bg-surface active:bg-surface'
+          }`}
+        >
+          <Settings
+            className={`size-icon-sm shrink-0 ${isSettings ? 'text-heading' : 'text-desc'}`}
+            aria-hidden="true"
+          />
+          {!collapsed && <span>Settings</span>}
+        </Link>
+
+        {/* Collapse / Expand Button */}
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
